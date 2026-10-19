@@ -1,0 +1,106 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-line: var(--line);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-warn: var(--warn);
+  --color-danger: var(--danger);
+}
+
+:root {
+  --bg: #eef4ff;
+  --bg-gradient: linear-gradient(165deg, #dbe8ff 0%, #f3f7ff 40%, #e6efff 75%, #cfe0ff 100%);
+  --hero: linear-gradient(135deg, #1e40af 0%, #2563eb 45%, #38bdf8 100%);
+  --surface: rgb(255 255 255 / 0.82);
+  --surface-2: rgb(239 245 255 / 0.9);
+  --line: rgb(30 64 175 / 0.12);
+  --ink: #0b1b3a;
+  --muted: #52617f;
+  --accent: #2563eb;
+  --accent-ink: #ffffff;
+  --warn: #b45309;
+  --danger: #dc2626;
+  color-scheme: light;
+}
+
+.dark {
+  --bg: #070d1c;
+  --bg-gradient: linear-gradient(165deg, #0b1838 0%, #070d1c 45%, #0a1530 75%, #0f2452 100%);
+  --hero: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0e7490 100%);
+  --surface: rgb(17 27 50 / 0.78);
+  --surface-2: rgb(24 38 70 / 0.85);
+  --line: rgb(147 197 253 / 0.12);
+  --ink: #e6eeff;
+  --muted: #94a3c4;
+  --accent: #60a5fa;
+  --accent-ink: #061226;
+  --warn: #fbbf24;
+  --danger: #f87171;
+  color-scheme: dark;
+}
+
+html,
+body {
+  background-color: var(--bg);
+  color: var(--ink);
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  overscroll-behavior-y: none;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+.hero {
+  background-image: var(--hero);
+}
+
+.glass {
+  background-color: var(--surface);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top), 1rem);
+}
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+
+input,
+textarea,
+select {
+  font-size: 16px; /* verhindert Zoom auf iOS */
+}
+
+@keyframes pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.pop {
+  animation: pop 260ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pop { animation: none; }
+}
