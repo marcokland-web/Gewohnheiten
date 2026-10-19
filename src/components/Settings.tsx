@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { loadProfile, saveProfile, updateHabit, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { useTheme, type ThemeMode } from '../lib/theme'
@@ -101,10 +101,61 @@ export function Settings({ onBack }: { onBack: () => void }) {
         </section>
       )}
 
+      <PasswordChange email={email} />
+
       <Button variant="ghost" className="mt-5 w-full" onClick={() => supabase.auth.signOut()}>
         Abmelden
       </Button>
       <p className="mt-4 text-center text-xs text-muted">Gewohnheiten · Version {__APP_VERSION__}</p>
     </div>
+  )
+}
+
+function PasswordChange({ email }: { email: string }) {
+  const [open, setOpen] = useState(false)
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  async function submit(e: FormEvent) {
+    e.preventDefault()
+    setBusy(true)
+    setMessage(null)
+    const { error } = await supabase.auth.updateUser({ password })
+    setBusy(false)
+    if (error) return setMessage({ ok: false, text: error.message })
+    setPassword('')
+    setOpen(false)
+    setMessage({ ok: true, text: 'Passwort geändert – gilt auch für die Zähler-App.' })
+  }
+
+  return (
+    <section className="glass mt-4 rounded-3xl p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-semibold">Passwort</h2>
+        {!open && (
+          <button className="text-sm font-medium text-accent" onClick={() => setOpen(true)}>
+            Ändern
+          </button>
+        )}
+      </div>
+      {open && (
+        <form onSubmit={submit} className="mt-3 space-y-3">
+          {/* Verstecktes Benutzerfeld, damit der Passwort-Manager weiß, zu welchem Konto das Passwort gehört */}
+          <input type="email" autoComplete="username" value={email} readOnly hidden />
+          <Field label="Neues Passwort">
+            <input className={inputClass} type="password" autoComplete="new-password" minLength={12} required value={password} onChange={(e) => setPassword(e.target.value)} />
+          </Field>
+          <p className="text-xs text-muted">
+            Tipp ins Feld – iPhone, iPad und Mac schlagen dann ein starkes Passwort vor und speichern es im Schlüsselbund. Mindestens 12 Zeichen.
+          </p>
+          <div className="flex gap-2">
+            <Button type="button" variant="ghost" className="flex-1" onClick={() => setOpen(false)}>Abbrechen</Button>
+            <Button type="submit" className="flex-1" disabled={busy}>{busy ? 'Speichern …' : 'Speichern'}</Button>
+          </div>
+        </form>
+      )}
+      {message && <p className={`mt-2 text-sm ${message.ok ? 'text-muted' : 'text-danger'}`}>{message.text}</p>}
+    </section>
   )
 }
