@@ -112,20 +112,20 @@ alter table gewohnheiten.checkins enable row level security;
 drop policy if exists profiles_own on gewohnheiten.profiles;
 create policy profiles_own on gewohnheiten.profiles
   for all to authenticated
-  using (user_id = auth.uid())
-  with check (user_id = auth.uid());
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
 
 drop policy if exists habits_own on gewohnheiten.habits;
 create policy habits_own on gewohnheiten.habits
   for all to authenticated
-  using (user_id = auth.uid())
-  with check (user_id = auth.uid());
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()));
 
 drop policy if exists checkins_own on gewohnheiten.checkins;
 create policy checkins_own on gewohnheiten.checkins
   for all to authenticated
-  using (user_id = auth.uid())
-  with check (user_id = auth.uid() and gewohnheiten.owns_habit(habit_id));
+  using (user_id = (select auth.uid()))
+  with check (user_id = (select auth.uid()) and gewohnheiten.owns_habit(habit_id));
 
 -- Rechte für die Data API (ohne Grants sieht PostgREST die Tabellen nicht)
 grant select, insert, update, delete on all tables in schema gewohnheiten to authenticated;
