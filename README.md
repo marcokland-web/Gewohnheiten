@@ -38,6 +38,26 @@ Login mit demselben Konto (E-Mail + Passwort).
 Auf iPhone/iPad: in Safari öffnen → Teilen → *Zum Home-Bildschirm*. (Nur so funktionieren später
 die Push-Erinnerungen.)
 
+## Erinnerungen
+
+```
+pg_cron (alle 5 Min) ──► Edge Function gewohnheiten-reminders ──► Web Push ──► iPhone/iPad/Browser
+                              │
+                              └─ gewohnheiten.claim_due_reminders(): ermittelt fällige Erinnerungen
+                                 und trägt sie gleichzeitig in reminder_log ein (nie doppelt)
+```
+
+- Erinnerung kommt im 60-Minuten-Fenster ab der eingestellten Zeit, nur wenn heute noch nichts
+  eingetragen ist, nicht in der Ruhezeit und bei Wochen-/Monatszielen nur, wenn es knapp wird.
+- Aktivieren pro Gerät unter *Einstellungen → Erinnerungen auf diesem Gerät* (iPhone/iPad: nur in der
+  installierten App).
+- SQL: `supabase/002_reminders.sql` (Tabellen, Logik), `supabase/003_cron.sql` (Zeitplan; das Secret
+  `gewohnheiten_cron_secret` liegt im Supabase Vault).
+- Function-Secrets (`GW_VAPID_PUBLIC_KEY`, `GW_VAPID_PRIVATE_KEY`, `GW_VAPID_SUBJECT`, `GW_CRON_SECRET`)
+  liegen lokal in `.env.secrets.local` (nicht im Repo) und werden mit
+  `npx supabase secrets set --project-ref asfwbuptsfcrgmmgdgim --env-file .env.secrets.local` gesetzt.
+- Function deployen: `npm run deploy:function`
+
 ## Offline
 
 Abhaken und Notizen funktionieren offline und werden nachgereicht. Gewohnheiten anlegen und
@@ -46,4 +66,4 @@ bearbeiten geht nur online. Der Schlüssel `(habit_id, day)` macht doppelte Übe
 ## Roadmap
 
 - [x] Schritt 1: App, Datenbank, Offline-Einträge, Statistik, automatische Veröffentlichung
-- [ ] Schritt 2: Push-Erinnerungen (Supabase Edge Function + `pg_cron`, Web Push mit VAPID)
+- [x] Schritt 2: Push-Erinnerungen (Supabase Edge Function + `pg_cron`, Web Push mit VAPID)

@@ -17,7 +17,7 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icon.svg', 'apple-touch-icon.png'],
+      includeAssets: ['icon.svg', 'apple-touch-icon.png', 'push-sw.js'],
       manifest: {
         name: 'Gewohnheiten',
         short_name: 'Gewohnheiten',
@@ -38,6 +38,8 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png}'],
         navigateFallback: `${base}index.html`,
         cleanupOutdatedCaches: true,
+        // Push-Empfang und Klick auf Benachrichtigungen
+        importScripts: ['push-sw.js'],
       },
     }),
   ],

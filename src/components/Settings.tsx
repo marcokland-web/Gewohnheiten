@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react'
+import { disablePush, enablePush, getPushState, sendTestPush, type PushState } from '../lib/push'
 import { loadProfile, saveProfile, updateHabit, useStore } from '../lib/store'
 import { supabase } from '../lib/supabase'
 import { useTheme, type ThemeMode } from '../lib/theme'
@@ -61,6 +62,8 @@ export function Settings({ onBack }: { onBack: () => void }) {
           ))}
         </div>
       </section>
+
+      <PushSettings />
 
       <section className="glass mt-4 rounded-3xl p-4">
         <h2 className="font-semibold">Ruhezeit</h2>
@@ -154,6 +157,64 @@ function PasswordChange({ email }: { email: string }) {
             <Button type="submit" className="flex-1" disabled={busy}>{busy ? 'Speichern …' : 'Speichern'}</Button>
           </div>
         </form>
+      )}
+      {message && <p className={`mt-2 text-sm ${message.ok ? 'text-muted' : 'text-danger'}`}>{message.text}</p>}
+    </section>
+  )
+}
+
+function PushSettings() {
+  const [state, setState] = useState<PushState | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null)
+
+  useEffect(() => {
+    getPushState().then(setState).catch(() => setState('unsupported'))
+  }, [])
+
+  async function run(action: () => Promise<string | void>) {
+    setBusy(true)
+    setMessage(null)
+    try {
+      const text = await action()
+      if (text) setMessage({ ok: true, text })
+    } catch (e) {
+      setMessage({ ok: false, text: (e as Error).message })
+    }
+    setState(await getPushState().catch(() => 'unsupported' as const))
+    setBusy(false)
+  }
+
+  return (
+    <section className="glass mt-4 rounded-3xl p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="font-semibold">Erinnerungen auf diesem Gerät</h2>
+        {state === 'on' && <span className="rounded-full bg-accent/15 px-2 py-0.5 text-xs font-medium text-accent">Aktiv</span>}
+      </div>
+
+      {state === null && <p className="mt-2 text-sm text-muted">Prüfe …</p>}
+      {state === 'needs-install' && (
+        <p className="mt-2 text-sm text-muted">
+          Auf iPhone und iPad gehen Erinnerungen nur in der installierten App: in Safari auf <b>Teilen</b> → <b>Zum Home-Bildschirm</b>, dann die App vom Home-Bildschirm öffnen.
+        </p>
+      )}
+      {state === 'unsupported' && <p className="mt-2 text-sm text-muted">Dieser Browser unterstützt keine Push-Benachrichtigungen.</p>}
+      {state === 'denied' && (
+        <p className="mt-2 text-sm text-muted">
+          Benachrichtigungen sind blockiert. Erlaube sie in den Einstellungen des Geräts (iPhone: Einstellungen → Mitteilungen → Gewohnheiten).
+        </p>
+      )}
+      {state === 'off' && (
+        <>
+          <p className="mt-2 text-sm text-muted">Du wirst nur erinnert, wenn eine Gewohnheit noch offen ist.</p>
+          <Button className="mt-3 w-full" disabled={busy} onClick={() => run(enablePush)}>Erinnerungen aktivieren</Button>
+        </>
+      )}
+      {state === 'on' && (
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <Button variant="ghost" disabled={busy} onClick={() => run(sendTestPush)}>Test senden</Button>
+          <Button variant="ghost" disabled={busy} onClick={() => run(disablePush)}>Deaktivieren</Button>
+        </div>
       )}
       {message && <p className={`mt-2 text-sm ${message.ok ? 'text-muted' : 'text-danger'}`}>{message.text}</p>}
     </section>
