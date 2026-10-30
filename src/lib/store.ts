@@ -1,5 +1,6 @@
 import { del, get, set } from 'idb-keyval'
 import { useSyncExternalStore } from 'react'
+import { T } from './i18n'
 import { supabase } from './supabase'
 import type { Checkin, Habit, HabitDraft, Profile } from './types'
 
@@ -219,7 +220,7 @@ async function doFlush() {
         : await supabase.from('checkins').delete().eq('habit_id', op.habit_id).eq('day', op.day)
 
     if (error && offline(error)) break // später erneut versuchen
-    if (error) setState({ error: `Eintrag verworfen: ${error.message}` })
+    if (error) setState({ error: `${T('Eintrag verworfen', 'Entry discarded')}: ${error.message}` })
     // Nur entfernen, wenn in der Zwischenzeit keine neuere Aktion dazukam
     if (state.queue[0] === op) setState({ queue: state.queue.slice(1) })
     else setState({ queue: state.queue.filter((q) => q !== op) })
@@ -285,7 +286,7 @@ export async function moveHabit(id: string, dir: -1 | 1) {
 }
 
 function friendly(msg: string): string {
-  if (/fetch|network/i.test(msg)) return 'Keine Verbindung – Gewohnheiten können nur online geändert werden.'
+  if (/fetch|network/i.test(msg)) return T('Keine Verbindung – Gewohnheiten können nur online geändert werden.', 'No connection – habits can only be changed online.')
   return msg
 }
 

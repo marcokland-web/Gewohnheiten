@@ -9,4 +9,9 @@ Vite + React + TS + Tailwind v4 PWA, gehostet auf GitHub Pages unter `/Gewohnhei
 - **Statistik/Fälligkeit:** `src/lib/stats.ts`. Die „knapp"-Regel muss mit `gewohnheiten.claim_due_reminders` in `supabase/002_reminders.sql` übereinstimmen.
 - **Erinnerungen:** pg_cron → Edge Function `supabase/functions/gewohnheiten-reminders` (Deploy: `npm run deploy:function`). Supabase-Secrets im geteilten Projekt immer mit `GW_` präfixen. SQL ausführen per `npx supabase db query --linked --project-ref asfwbuptsfcrgmmgdgim -f <datei>`.
 - Push-Handler im Service Worker: `public/push-sw.js` (per Workbox `importScripts`).
-- UI-Texte auf Deutsch. Farben nur über die CSS-Tokens in `src/index.css`.
+- **Studio-Design:** Farben nur über die Studio-Tokens in `src/index.css` (Bordeaux/Gold, Liquid Glass nur für Navigation: `.glass`, Inhalte `.card`). Gewohnheitsfarben: gespeicherte Schlüssel (`blue`, `sky`, …) bleiben, Farbwerte kommen aus `--hc-*`.
+- **Sprache:** Alle sichtbaren Texte über `T(de, en)` aus `src/lib/i18n.ts`, Datum/Zahlen über `locale()`. Komponenten rufen `useLang()` auf. Standard Deutsch.
+- **Thema/Sprache pro Gerät:** `studio-theme` (`light|dark`, fehlt = automatisch) und `studio-lang` – studioweit gleiche Schlüssel, daher ohne `gewohnheiten:`-Präfix. Vor dem ersten Zeichnen gesetzt im `<head>` von `index.html` (`data-theme` auf `<html>`).
+- **Aufbau:** `Shell.tsx` (Kopfzeile mit Zahnrad, Tab-Leiste iPhone / Pille iPad / Seitenleiste Desktop), Tabs „Heute“ und „Analyse“, Einstellungen als Sheet.
+- **Analyse:** `rateInRange` u. a. in `src/lib/stats.ts`; „erfüllt“ = Tag/Woche/Monat mit erreichtem Ziel, laufende offene Zeiträume zählen nicht. Gesamtquote = Durchschnitt der Gewohnheiten.
+- **Icons:** aus DasTeam `studio/brand/gewohnheiten*.svg` (apple-touch-icon 180, icon-192/512, maskable-512, favicon-32, icon.svg).

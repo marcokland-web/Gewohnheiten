@@ -1,3 +1,4 @@
+import { T } from './i18n'
 import { supabase } from './supabase'
 
 // Web Push für Erinnerungen. Auf iPhone/iPad nur in der installierten App
@@ -18,7 +19,7 @@ function supported() {
 
 function deviceLabel(): string {
   const ua = navigator.userAgent
-  const device = /iPad/.test(ua) || (isIOS() && !/iPhone/.test(ua)) ? 'iPad' : /iPhone/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : 'Gerät'
+  const device = /iPad/.test(ua) || (isIOS() && !/iPhone/.test(ua)) ? 'iPad' : /iPhone/.test(ua) ? 'iPhone' : /Android/.test(ua) ? 'Android' : /Mac/.test(ua) ? 'Mac' : /Windows/.test(ua) ? 'Windows' : T('Gerät', 'Device')
   const browser = /Edg\//.test(ua) ? 'Edge' : /Firefox\//.test(ua) ? 'Firefox' : /Chrome\//.test(ua) ? 'Chrome' : 'Safari'
   return isStandalone() ? `${device} (App)` : `${device} · ${browser}`
 }
@@ -52,7 +53,7 @@ export async function getPushState(): Promise<PushState> {
 
 export async function enablePush() {
   const permission = await Notification.requestPermission()
-  if (permission !== 'granted') throw new Error('Benachrichtigungen wurden nicht erlaubt.')
+  if (permission !== 'granted') throw new Error(T('Benachrichtigungen wurden nicht erlaubt.', 'Notifications were not allowed.'))
   const reg = await navigator.serviceWorker.ready
   const sub =
     (await reg.pushManager.getSubscription()) ??
@@ -72,6 +73,6 @@ export async function sendTestPush(): Promise<string> {
   const { data, error } = await supabase.functions.invoke('gewohnheiten-reminders', { body: { test: true } })
   if (error) throw new Error(error.message)
   const { sent, errors } = data as { sent: number; errors: string[] }
-  if (sent > 0) return `Test an ${sent} ${sent === 1 ? 'Gerät' : 'Geräte'} geschickt.`
-  throw new Error(errors[0] ?? 'Nichts gesendet.')
+  if (sent > 0) return T(`Test an ${sent} ${sent === 1 ? 'Gerät' : 'Geräte'} geschickt.`, `Test sent to ${sent} ${sent === 1 ? 'device' : 'devices'}.`)
+  throw new Error(errors[0] ?? T('Nichts gesendet.', 'Nothing sent.'))
 }

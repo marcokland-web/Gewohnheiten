@@ -1,51 +1,108 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:where(.dark, .dark *));
+/* Studio-Designsystem: Bordeaux und Gold, Systemschrift, Liquid Glass.
+   Thema über data-theme auf <html> (gesetzt vor dem ersten Zeichnen, siehe index.html). */
+
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 @theme {
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-rounded: ui-rounded, 'SF Pro Rounded', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 
   --color-bg: var(--bg);
   --color-surface: var(--surface);
-  --color-surface-2: var(--surface-2);
-  --color-line: var(--line);
+  --color-fill: var(--fill);
+  --color-separator: var(--separator);
   --color-ink: var(--ink);
-  --color-muted: var(--muted);
-  --color-accent: var(--accent);
-  --color-accent-ink: var(--accent-ink);
-  --color-warn: var(--warn);
+  --color-ink-2: var(--ink-2);
+  --color-brand: var(--brand);
+  --color-brand-strong: var(--brand-strong);
+  --color-brand-tint: var(--brand-tint);
+  --color-on-brand: var(--on-brand);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-success: var(--success);
   --color-danger: var(--danger);
+  --color-warning: var(--warning);
 }
 
 :root {
-  --bg: #eef4ff;
-  --bg-gradient: linear-gradient(165deg, #dbe8ff 0%, #f3f7ff 40%, #e6efff 75%, #cfe0ff 100%);
-  --hero: linear-gradient(135deg, #1e40af 0%, #2563eb 45%, #38bdf8 100%);
-  --surface: rgb(255 255 255 / 0.82);
-  --surface-2: rgb(239 245 255 / 0.9);
-  --line: rgb(30 64 175 / 0.12);
-  --ink: #0b1b3a;
-  --muted: #52617f;
-  --accent: #2563eb;
-  --accent-ink: #ffffff;
-  --warn: #b45309;
-  --danger: #dc2626;
+  --bg: #faf7f2;
+  --surface: #ffffff;
+  --fill: #f1ebe3;
+  --separator: #e5ddd3;
+  --ink: #1d1a1c;
+  --ink-2: #675e62;
+  --brand: #7a1e3a;
+  --brand-strong: #5a1028;
+  --brand-tint: #f3e3e8;
+  --on-brand: #ffffff;
+  --gold: #c8963e;
+  --gold-ink: #8a6420;
+  --success: #276f38;
+  --danger: #b3261e;
+  --warning: #9a5b00;
+  --info: #2a6390;
+
+  /* Farben der Gewohnheiten (Familienpalette, kein Blau) */
+  --hc-blue: #7a1e3a;
+  --hc-sky: #9c6f22; /* Gold, auf Hell abgedunkelt für 3:1 */
+  --hc-indigo: #b0476a;
+  --hc-cyan: #4f7a5a;
+  --hc-teal: #2f6f6a;
+  --hc-violet: #6b4e8c;
+
+  --glass: rgb(255 255 255 / 0.58);
+  --glass-strong: rgb(255 255 255 / 0.78);
+  --glass-edge: rgb(255 255 255 / 0.85);
+  --glass-line: rgb(122 30 58 / 0.1);
+  --glass-shine: rgb(255 255 255 / 0.9);
+  --glass-tint: rgb(122 30 58 / 0.08);
+  --glass-shadow: 0 10px 30px rgb(90 16 40 / 0.14), 0 2px 6px rgb(90 16 40 / 0.08);
+  --glass-blur: blur(22px) saturate(185%);
+  --aura-1: rgb(229 122 152 / 0.22);
+  --aura-2: rgb(227 184 102 / 0.26);
+  --aura-3: rgb(122 30 58 / 0.1);
+  --card-shadow: 0 1px 2px rgb(90 16 40 / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.9);
   color-scheme: light;
 }
 
-.dark {
-  --bg: #070d1c;
-  --bg-gradient: linear-gradient(165deg, #0b1838 0%, #070d1c 45%, #0a1530 75%, #0f2452 100%);
-  --hero: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #0e7490 100%);
-  --surface: rgb(17 27 50 / 0.78);
-  --surface-2: rgb(24 38 70 / 0.85);
-  --line: rgb(147 197 253 / 0.12);
-  --ink: #e6eeff;
-  --muted: #94a3c4;
-  --accent: #60a5fa;
-  --accent-ink: #061226;
-  --warn: #fbbf24;
-  --danger: #f87171;
+:root[data-theme='dark'] {
+  --bg: #141012;
+  --surface: #1e191b;
+  --fill: #2a2326;
+  --separator: #3a3134;
+  --ink: #f4eeea;
+  --ink-2: #ada3a6;
+  --brand: #e57a98;
+  --brand-strong: #f29bb3;
+  --brand-tint: #3a1c26;
+  --on-brand: #141012;
+  --gold: #e3b866;
+  --gold-ink: #e3b866;
+  --success: #6cc97a;
+  --danger: #ff8a80;
+  --warning: #f2b44c;
+  --info: #8cc0ea;
+
+  --hc-blue: #e57a98;
+  --hc-sky: #e3b866;
+  --hc-indigo: #d58aa6;
+  --hc-cyan: #8cbf8f;
+  --hc-teal: #6fb5ad;
+  --hc-violet: #b39ad6;
+
+  --glass: rgb(40 30 34 / 0.55);
+  --glass-strong: rgb(46 36 40 / 0.78);
+  --glass-edge: rgb(255 255 255 / 0.16);
+  --glass-line: rgb(255 255 255 / 0.08);
+  --glass-shine: rgb(255 255 255 / 0.22);
+  --glass-tint: rgb(229 122 152 / 0.12);
+  --glass-shadow: 0 12px 34px rgb(0 0 0 / 0.45), 0 2px 6px rgb(0 0 0 / 0.3);
+  --aura-1: rgb(229 122 152 / 0.16);
+  --aura-2: rgb(227 184 102 / 0.12);
+  --aura-3: rgb(122 30 58 / 0.3);
+  --card-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
   color-scheme: dark;
 }
 
@@ -53,37 +110,175 @@ html,
 body {
   background-color: var(--bg);
   color: var(--ink);
+  font-family: var(--font-sans);
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
 }
 
+/* warmer Farbgrund, durch den das Glas schimmert */
 body {
   min-height: 100dvh;
-  background-image: var(--bg-gradient);
+  font-size: 17px;
+  line-height: 22px;
+  background:
+    radial-gradient(60vmax 50vmax at 8% -6%, var(--aura-1), transparent 60%),
+    radial-gradient(55vmax 45vmax at 100% 18%, var(--aura-2), transparent 62%),
+    radial-gradient(70vmax 60vmax at 40% 110%, var(--aura-3), transparent 60%),
+    var(--bg);
   background-attachment: fixed;
   overscroll-behavior-y: none;
+  overflow-x: hidden;
 }
 
 #root {
   min-height: 100dvh;
 }
 
-.hero {
-  background-image: var(--hero);
+/* Schriftgrößen nach Apple (iPhone/iPad), am Desktop kompakter */
+.t-title {
+  font-size: 34px;
+  line-height: 41px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.t-headline {
+  font-size: 17px;
+  line-height: 22px;
+  font-weight: 600;
+}
+.t-sub {
+  font-size: 15px;
+  line-height: 20px;
+}
+.t-foot {
+  font-size: 13px;
+  line-height: 18px;
+}
+.t-num {
+  font-family: var(--font-rounded);
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1024px) and (pointer: fine) {
+  body {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .t-title {
+    font-size: 28px;
+    line-height: 34px;
+  }
+  .t-headline {
+    font-size: 15px;
+    line-height: 20px;
+  }
+  .t-sub {
+    font-size: 14px;
+    line-height: 20px;
+  }
+  .t-foot {
+    font-size: 12px;
+    line-height: 16px;
+  }
 }
 
-.glass {
-  background-color: var(--surface);
-  border: 1px solid var(--line);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+/* Glas: nur Navigationsebene (Kopfzeile, Tab-Leiste, Pillen, Sheets, Hinweise) */
+.glass,
+.glass-strong {
+  background: var(--glass);
+  -webkit-backdrop-filter: var(--glass-blur);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-edge);
+  box-shadow: var(--glass-shadow), inset 0 1px 0 var(--glass-shine), inset 0 -1px 0 var(--glass-line);
+}
+.glass-strong {
+  background: var(--glass-strong);
 }
 
-.pt-safe {
-  padding-top: max(env(safe-area-inset-top), 1rem);
+/* Inhalte: ruhig und deckend, nur feine Lichtkante */
+.card {
+  background: var(--surface);
+  border-radius: 14px;
+  box-shadow: var(--card-shadow);
+}
+
+/* Hauptknopf: deckend Bordeaux mit Glanzkante */
+.btn-primary {
+  background-color: var(--brand);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.18), transparent 55%);
+  color: var(--on-brand);
+  box-shadow: 0 6px 18px rgb(122 30 58 / 0.28), inset 0 1px 0 rgb(255 255 255 / 0.35), inset 0 -2px 0 rgb(0 0 0 / 0.12);
+}
+
+/* Segment-Steuerung (Radio-Gruppe) */
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  background: var(--fill);
+  border-radius: 8px;
+  padding: 2px;
+  min-height: 44px;
+}
+.seg label {
+  position: relative;
+  display: grid;
+  min-height: 40px;
+}
+.seg input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.seg span {
+  display: grid;
+  place-items: center;
+  border-radius: 6px;
+  font-size: 15px;
+  line-height: 20px;
+  font-weight: 500;
+  color: var(--ink-2);
+  padding: 0 4px;
+  text-align: center;
+}
+.seg input:checked + span {
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.14), inset 0 1px 0 var(--glass-shine);
+}
+.seg input:focus-visible + span {
+  outline: 3px solid var(--brand);
+  outline-offset: 1px;
+}
+
+:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 2px;
+}
+
+/* Abstand zur schwebenden Tab-Leiste */
+.pb-tabbar {
+  padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+}
+@media (min-width: 768px) {
+  .pb-tabbar {
+    padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  }
 }
 .pb-safe {
   padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+}
+.top-safe {
+  top: calc(env(safe-area-inset-top, 0px) + 8px);
+}
+.mt-safe {
+  margin-top: calc(env(safe-area-inset-top, 0px) + 8px);
+}
+.bottom-tabbar {
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
 }
 
 input,
@@ -93,14 +288,48 @@ select {
 }
 
 @keyframes pop {
-  0% { transform: scale(1); }
-  40% { transform: scale(1.18); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 .pop {
   animation: pop 260ms ease-out;
 }
+@keyframes sheet-up {
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+}
+.sheet-in {
+  animation: sheet-up 220ms ease-out;
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .pop { animation: none; }
+  .pop,
+  .sheet-in {
+    animation: none;
+  }
+}
+
+/* Ohne Glas-Unterstützung oder bei „Transparenz reduzieren“: deckend */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-strong {
+    background: var(--surface);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong {
+    background: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
 }

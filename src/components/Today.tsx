@@ -1,14 +1,15 @@
 import { useMemo, useState } from 'react'
-import { addDays, formatDay, todayKey } from '../lib/dates'
+import { addDays, formatDay, relativeDay, todayKey } from '../lib/dates'
+import { plural, T, useLang } from '../lib/i18n'
 import { todayStatus, type TodayStatus } from '../lib/stats'
 import { ckey, moveHabit, setChecked, setNote, useStore } from '../lib/store'
 import type { Habit } from '../lib/types'
-import { Button, habitColor, IconBell, IconCheck, IconCloudOff, IconDown, IconGear, IconNote, IconPlus, IconUp, inputClass, Sheet } from './ui'
+import { Brand, LargeTitle, Page } from './Shell'
+import { Button, GlassIconButton, habitColor, habitTint, IconBell, IconCheck, IconCloudOff, IconDown, IconNote, IconPlus, IconUp, inputClass, Sheet } from './ui'
 
 interface Props {
   onOpen: (id: string) => void
   onNew: () => void
-  onSettings: () => void
 }
 
 /** Tage mit Eintrag pro Gewohnheit */
@@ -24,7 +25,8 @@ export function useDaysByHabit() {
   }, [checkins])
 }
 
-export function Today({ onOpen, onNew, onSettings }: Props) {
+export function Today({ onOpen, onNew }: Props) {
+  useLang()
   const { habits, checkins, loaded, queue, online, syncing } = useStore()
   const daysByHabit = useDaysByHabit()
   const today = todayKey()
@@ -42,58 +44,61 @@ export function Today({ onOpen, onNew, onSettings }: Props) {
   const strip = Array.from({ length: 7 }, (_, i) => addDays(today, i - 6))
 
   return (
-    <div className="mx-auto max-w-2xl px-4 pt-safe pb-28">
-      <header className="hero relative overflow-hidden rounded-3xl p-5 text-white shadow-xl shadow-blue-900/25">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-sm text-white/75">{day === today ? 'Heute' : formatDay(day, { weekday: 'long' })}</p>
-            <h1 className="text-2xl font-bold">{formatDay(day, { day: 'numeric', month: 'long' })}</h1>
-            <SyncBadge online={online} pending={queue.length} syncing={syncing} />
-          </div>
-          <div className="flex items-center gap-3">
-            <ProgressRing value={relevant.length ? doneCount / relevant.length : 0} label={`${doneCount}/${relevant.length}`} />
-            <button onClick={onSettings} className="rounded-full bg-white/15 p-2.5 hover:bg-white/25" aria-label="Einstellungen">
-              <IconGear />
-            </button>
-          </div>
-        </div>
-        <div className="mt-5 grid grid-cols-7 gap-1.5">
-          {strip.map((d) => (
-            <button
-              key={d}
-              onClick={() => setDay(d)}
-              className={`rounded-xl py-1.5 text-center transition ${d === day ? 'bg-white text-blue-800 shadow' : 'bg-white/10 text-white/85 hover:bg-white/20'}`}
-              aria-pressed={d === day}
-            >
-              <div className="text-[11px] uppercase">{formatDay(d, { weekday: 'short' }).replace('.', '')}</div>
-              <div className="text-base font-semibold">{formatDay(d, { day: 'numeric' }).replace('.', '')}</div>
-            </button>
-          ))}
-        </div>
-      </header>
+    <Page
+      left={<Brand className="lg:hidden" />}
+      title={T('Heute', 'Today')}
+      actions={
+        !sorting && (
+          <GlassIconButton label={T('Neue Gewohnheit', 'New habit')} onClick={onNew}>
+            <IconPlus />
+          </GlassIconButton>
+        )
+      }
+    >
+      <div className="flex items-start justify-between gap-3">
+        <LargeTitle sub={<>{formatDay(day, { day: 'numeric', month: 'long', year: 'numeric' })} <SyncBadge online={online} pending={queue.length} syncing={syncing} /></>}>
+          {relativeDay(day, today)}
+        </LargeTitle>
+        {relevant.length > 0 && <ProgressRing value={doneCount / relevant.length} label={`${doneCount}/${relevant.length}`} />}
+      </div>
 
-      <div className="mt-5 mb-2 flex items-center justify-between px-1">
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">Gewohnheiten</h2>
+      <div className="card mb-5 grid grid-cols-7 gap-1 p-1.5" role="group" aria-label={T('Tag wählen', 'Choose day')}>
+        {strip.map((d) => (
+          <button
+            key={d}
+            onClick={() => setDay(d)}
+            className={`flex min-h-12 flex-col items-center justify-center rounded-[10px] transition ${d === day ? 'bg-brand text-on-brand' : 'text-ink hover:bg-fill'}`}
+            aria-pressed={d === day}
+            aria-label={formatDay(d, { weekday: 'long', day: 'numeric', month: 'long' })}
+          >
+            <span className={`text-[11px] leading-[13px] uppercase ${d === day ? '' : 'text-ink-2'}`}>{formatDay(d, { weekday: 'short' }).replace('.', '')}</span>
+            <span className="t-num text-[17px] leading-[22px] font-semibold">{formatDay(d, { day: 'numeric' }).replace('.', '')}</span>
+          </button>
+        ))}
+      </div>
+
+      <div className="mb-1.5 flex min-h-11 items-center justify-between px-1">
+        <h2 className="t-foot font-medium text-ink-2 uppercase">{T('Gewohnheiten', 'Habits')}</h2>
         {active.length > 1 && (
-          <button onClick={() => setSorting((s) => !s)} className="text-sm font-medium text-accent">
-            {sorting ? 'Fertig' : 'Sortieren'}
+          <button onClick={() => setSorting((s) => !s)} className="-mr-2 min-h-11 px-2 font-semibold text-brand">
+            {sorting ? T('Fertig', 'Done') : T('Sortieren', 'Reorder')}
           </button>
         )}
       </div>
 
       {!loaded ? (
-        <p className="py-10 text-center text-muted">Lade …</p>
+        <p className="py-10 text-center text-ink-2">{T('Lade …', 'Loading …')}</p>
       ) : active.length === 0 ? (
-        <div className="glass rounded-3xl p-8 text-center">
-          <div className="text-4xl">🌱</div>
-          <p className="mt-3 font-medium">Noch keine Gewohnheiten</p>
-          <p className="mt-1 text-sm text-muted">Fang mit einer einzigen an – klein und machbar.</p>
-          <Button className="mt-5" onClick={onNew}><IconPlus /> Erste Gewohnheit</Button>
+        <div className="card p-8 text-center">
+          <div className="text-4xl" aria-hidden>🌱</div>
+          <p className="t-headline mt-3">{T('Noch keine Gewohnheiten', 'No habits yet')}</p>
+          <p className="t-sub mt-1 text-ink-2">{T('Fang mit einer einzigen an – klein und machbar.', 'Start with just one – small and doable.')}</p>
+          <Button className="mt-5" onClick={onNew}><IconPlus /> {T('Erste Gewohnheit', 'First habit')}</Button>
         </div>
       ) : (
-        <ul className="space-y-2.5">
+        <ul className="card overflow-hidden">
           {ordered.map(({ habit, status }, idx) => (
-            <li key={habit.id}>
+            <li key={habit.id} className="relative [&+&]:before:absolute [&+&]:before:top-0 [&+&]:before:right-0 [&+&]:before:left-[72px] [&+&]:before:h-px [&+&]:before:bg-separator">
               <HabitRow
                 habit={habit}
                 status={status}
@@ -110,18 +115,8 @@ export function Today({ onOpen, onNew, onSettings }: Props) {
         </ul>
       )}
 
-      {!sorting && (
-        <button
-          onClick={onNew}
-          className="hero fixed right-5 bottom-[max(env(safe-area-inset-bottom),1.25rem)] flex size-14 items-center justify-center rounded-full text-white shadow-xl shadow-blue-900/30 transition hover:scale-105"
-          aria-label="Neue Gewohnheit"
-        >
-          <IconPlus />
-        </button>
-      )}
-
       {noteFor && <NoteSheet habit={noteFor} day={day} onClose={() => setNoteFor(null)} />}
-    </div>
+    </Page>
   )
 }
 
@@ -148,38 +143,39 @@ function HabitRow(props: {
   const muted = !status.scheduledToday || (status.done && !status.checkedToday)
 
   return (
-    <div className={`glass flex items-center gap-3 rounded-2xl p-3 pl-4 transition ${muted ? 'opacity-70' : ''}`}>
-      <button onClick={props.onOpen} className="flex min-w-0 flex-1 items-center gap-3 text-left">
-        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl text-2xl" style={{ background: `${color}22` }}>
+    <div className="flex items-center gap-2 py-2.5 pr-3 pl-4">
+      <button onClick={props.onOpen} className={`flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left ${muted ? 'opacity-65' : ''}`}>
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-[10px] text-2xl" style={{ background: habitTint(habit.color, 16) }} aria-hidden>
           {habit.icon}
         </span>
         <span className="min-w-0">
-          <span className={`block truncate font-semibold ${status.checkedToday ? 'text-muted line-through decoration-2' : ''}`}>{habit.name}</span>
-          <span className={`flex items-center gap-1 truncate text-sm ${status.urgent ? 'font-medium text-warn' : 'text-muted'}`}>
+          <span className={`block truncate font-semibold ${status.checkedToday ? 'text-ink-2 line-through decoration-2' : ''}`}>{habit.name}</span>
+          <span className={`t-sub flex items-center gap-1 truncate ${status.urgent ? 'font-medium text-warning' : 'text-ink-2'}`}>
             {habit.reminder_time && <IconBell />}
+            {status.urgent && <span aria-hidden>!</span>}
             {status.hint}
           </span>
         </span>
       </button>
 
       {sorting ? (
-        <div className="flex flex-col">
-          <button disabled={props.isFirst} onClick={() => moveHabit(habit.id, -1)} className="rounded p-1 text-muted disabled:opacity-30" aria-label="Nach oben"><IconUp /></button>
-          <button disabled={props.isLast} onClick={() => moveHabit(habit.id, 1)} className="rounded p-1 text-muted disabled:opacity-30" aria-label="Nach unten"><IconDown /></button>
+        <div className="flex">
+          <button disabled={props.isFirst} onClick={() => moveHabit(habit.id, -1)} className="flex size-11 items-center justify-center rounded-full text-ink-2 disabled:opacity-30" aria-label={T(`${habit.name} nach oben`, `Move ${habit.name} up`)}><IconUp /></button>
+          <button disabled={props.isLast} onClick={() => moveHabit(habit.id, 1)} className="flex size-11 items-center justify-center rounded-full text-ink-2 disabled:opacity-30" aria-label={T(`${habit.name} nach unten`, `Move ${habit.name} down`)}><IconDown /></button>
         </div>
       ) : (
         <>
           {status.checkedToday && (
-            <button onClick={props.onNote} className={`rounded-full p-2 ${hasNote ? 'text-accent' : 'text-muted'}`} aria-label="Notiz">
+            <button onClick={props.onNote} className={`flex size-11 items-center justify-center rounded-full ${hasNote ? 'text-brand' : 'text-ink-2'}`} aria-label={hasNote ? T('Notiz bearbeiten', 'Edit note') : T('Notiz hinzufügen', 'Add note')}>
               <IconNote />
             </button>
           )}
           <button
             onClick={props.onToggle}
             key={String(status.checkedToday)}
-            className={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 transition ${status.checkedToday ? 'pop border-transparent text-white' : 'border-line text-transparent hover:border-accent/60'}`}
-            style={status.checkedToday ? { background: `linear-gradient(135deg, ${color}, #38bdf8)` } : undefined}
-            aria-label={status.checkedToday ? `${habit.name}: Eintrag entfernen` : `${habit.name}: erledigt`}
+            className={`flex size-12 shrink-0 items-center justify-center rounded-full border-2 transition ${status.checkedToday ? 'pop border-transparent text-white dark:text-[#141012]' : 'border-separator text-transparent hover:border-brand/60'}`}
+            style={status.checkedToday ? { background: color } : undefined}
+            aria-label={status.checkedToday ? T(`${habit.name}: Eintrag entfernen`, `${habit.name}: remove entry`) : T(`${habit.name}: erledigt`, `${habit.name}: done`)}
             aria-pressed={status.checkedToday}
           >
             <IconCheck size={22} />
@@ -190,16 +186,16 @@ function HabitRow(props: {
   )
 }
 
-function ProgressRing({ value, label }: { value: number; label: string }) {
+export function ProgressRing({ value, label, size = 56 }: { value: number; label: string; size?: number }) {
   const r = 22
   const c = 2 * Math.PI * r
   return (
-    <div className="relative size-14">
-      <svg viewBox="0 0 52 52" className="size-14 -rotate-90">
-        <circle cx="26" cy="26" r={r} fill="none" stroke="rgb(255 255 255 / 0.2)" strokeWidth="5" />
-        <circle cx="26" cy="26" r={r} fill="none" stroke="white" strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - value)} className="transition-[stroke-dashoffset] duration-500" />
+    <div className="relative mt-1 shrink-0" style={{ width: size, height: size }} role="img" aria-label={T(`${label} erledigt`, `${label} done`)}>
+      <svg viewBox="0 0 52 52" className="size-full -rotate-90" aria-hidden>
+        <circle cx="26" cy="26" r={r} fill="none" stroke="var(--fill)" strokeWidth="5" />
+        <circle cx="26" cy="26" r={r} fill="none" stroke="var(--gold)" strokeWidth="5" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - value)} className="transition-[stroke-dashoffset] duration-500" />
       </svg>
-      <span className="absolute inset-0 flex items-center justify-center text-sm font-bold">{label}</span>
+      <span className="t-num t-foot absolute inset-0 flex items-center justify-center font-bold" aria-hidden>{label}</span>
     </div>
   )
 }
@@ -207,11 +203,11 @@ function ProgressRing({ value, label }: { value: number; label: string }) {
 function SyncBadge({ online, pending, syncing }: { online: boolean; pending: number; syncing: boolean }) {
   if (online && !pending) return null
   return (
-    <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-xs">
+    <span className="t-foot ml-1 inline-flex items-center gap-1 rounded-full bg-fill px-2 py-0.5 align-middle text-ink-2">
       {!online && <IconCloudOff />}
-      {!online ? 'Offline' : syncing ? 'Synchronisiere' : 'Ausstehend'}
-      {pending > 0 && ` · ${pending} ${pending === 1 ? 'Eintrag wartet' : 'Einträge warten'}`}
-    </p>
+      {!online ? 'Offline' : syncing ? T('Synchronisiere', 'Syncing') : T('Ausstehend', 'Pending')}
+      {pending > 0 && ` · ${pending} ${plural(pending, 'Eintrag wartet', 'Einträge warten', 'entry waiting', 'entries waiting')}`}
+    </span>
   )
 }
 
@@ -219,18 +215,17 @@ export function NoteSheet({ habit, day, onClose }: { habit: Habit; day: string; 
   const { checkins } = useStore()
   const [text, setText] = useState(checkins[ckey(habit.id, day)]?.note ?? '')
   return (
-    <Sheet title={`${habit.icon} Notiz · ${formatDay(day)}`} onClose={onClose}>
-      <textarea className={`${inputClass} min-h-32`} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} placeholder="Wie lief's?" autoFocus />
-      <div className="mt-4 flex gap-2">
-        <Button variant="ghost" className="flex-1" onClick={onClose}>Abbrechen</Button>
+    <Sheet title={`${habit.icon} ${T('Notiz', 'Note')} · ${formatDay(day)}`} onClose={onClose}>
+      <textarea className={`${inputClass} min-h-32`} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} placeholder={T('Wie lief’s?', 'How did it go?')} aria-label={T('Notiz', 'Note')} autoFocus />
+      <div className="mt-4 grid grid-cols-2 gap-2">
+        <Button variant="tinted" onClick={onClose}>{T('Abbrechen', 'Cancel')}</Button>
         <Button
-          className="flex-1"
           onClick={() => {
             setNote(habit.id, day, text)
             onClose()
           }}
         >
-          Speichern
+          {T('Speichern', 'Save')}
         </Button>
       </div>
     </Sheet>

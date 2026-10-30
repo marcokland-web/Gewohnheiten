@@ -1,21 +1,23 @@
 import { useState, type FormEvent } from 'react'
-import { WEEKDAY_SHORT } from '../lib/dates'
+import { weekdayShort } from '../lib/dates'
+import { T, useLang } from '../lib/i18n'
 import { createHabit, updateHabit } from '../lib/store'
 import type { Habit, HabitDraft, ScheduleType } from '../lib/types'
-import { Button, Field, HABIT_COLORS, inputClass, Sheet } from './ui'
+import { Button, Field, HABIT_COLORS, habitColor, habitColorName, habitTint, inputClass, Segmented, Sheet } from './ui'
 
 const ICONS = ['✅', '💧', '🏃', '🧘', '📚', '🦷', '💪', '🥗', '😴', '🚭', '💊', '🧹', '✍️', '🎸', '🌿', '📵']
 
-const SCHEDULES: { value: ScheduleType; label: string }[] = [
-  { value: 'daily', label: 'Täglich' },
-  { value: 'weekdays', label: 'Wochentage' },
-  { value: 'per_week', label: 'X× / Woche' },
-  { value: 'per_month', label: 'X× / Monat' },
+const schedules = (): { value: ScheduleType; label: string }[] => [
+  { value: 'daily', label: T('Täglich', 'Daily') },
+  { value: 'weekdays', label: T('Wochentage', 'Weekdays') },
+  { value: 'per_week', label: T('X× / Woche', 'X× / week') },
+  { value: 'per_month', label: T('X× / Monat', 'X× / month') },
 ]
 
 const hhmm = (t: string | null) => (t ? t.slice(0, 5) : '')
 
 export function HabitEditor({ habit, onClose }: { habit?: Habit; onClose: () => void }) {
+  useLang()
   const [draft, setDraft] = useState<HabitDraft>(() => ({
     name: habit?.name ?? '',
     icon: habit?.icon ?? '✅',
@@ -31,11 +33,12 @@ export function HabitEditor({ habit, onClose }: { habit?: Habit; onClose: () => 
   const [error, setError] = useState<string | null>(null)
 
   const patch = (p: Partial<HabitDraft>) => setDraft((d) => ({ ...d, ...p }))
-  const maxTarget = draft.schedule_type === 'per_week' ? 7 : 31
+  // Höchstens 28 pro Monat, damit das Ziel auch im Februar erreichbar ist
+  const maxTarget = draft.schedule_type === 'per_week' ? 7 : 28
 
   async function submit(e: FormEvent) {
     e.preventDefault()
-    if (draft.schedule_type === 'weekdays' && !draft.weekdays.length) return setError('Mindestens einen Wochentag wählen.')
+    if (draft.schedule_type === 'weekdays' && !draft.weekdays.length) return setError(T('Mindestens einen Wochentag wählen.', 'Choose at least one weekday.'))
     setBusy(true)
     setError(null)
     const payload: HabitDraft = {
@@ -57,22 +60,22 @@ export function HabitEditor({ habit, onClose }: { habit?: Habit; onClose: () => 
   }
 
   return (
-    <Sheet title={habit ? 'Gewohnheit bearbeiten' : 'Neue Gewohnheit'} onClose={onClose}>
+    <Sheet title={habit ? T('Gewohnheit bearbeiten', 'Edit habit') : T('Neue Gewohnheit', 'New habit')} onClose={onClose}>
       <form onSubmit={submit} className="space-y-5">
-        <Field label="Name">
-          <input className={inputClass} required maxLength={80} placeholder="z. B. 2 Liter trinken" value={draft.name} onChange={(e) => patch({ name: e.target.value })} autoFocus={!habit} />
+        <Field label={T('Name', 'Name')}>
+          <input className={inputClass} required maxLength={80} placeholder={T('z. B. 2 Liter trinken', 'e.g. drink 2 litres')} value={draft.name} onChange={(e) => patch({ name: e.target.value })} autoFocus={!habit} />
         </Field>
 
         <div>
-          <span className="mb-1.5 block text-sm font-medium text-muted">Symbol</span>
-          <div className="grid grid-cols-8 gap-1.5">
+          <span className="t-foot mb-1.5 block font-medium text-ink-2">{T('Symbol', 'Icon')}</span>
+          <div className="grid grid-cols-6 gap-1.5 sm:grid-cols-8">
             {ICONS.map((i) => (
               <button
                 type="button"
                 key={i}
                 onClick={() => patch({ icon: i })}
-                className={`aspect-square rounded-xl text-xl transition ${draft.icon === i ? 'bg-accent/20 ring-2 ring-accent' : 'bg-surface-2'}`}
-                aria-label={`Symbol ${i}`}
+                className={`flex aspect-square min-h-11 items-center justify-center rounded-[10px] text-xl transition ${draft.icon === i ? 'bg-brand-tint ring-2 ring-brand' : 'bg-fill'}`}
+                aria-label={`${T('Symbol', 'Icon')} ${i}`}
                 aria-pressed={draft.icon === i}
               >
                 {i}
@@ -82,48 +85,40 @@ export function HabitEditor({ habit, onClose }: { habit?: Habit; onClose: () => 
         </div>
 
         <div>
-          <span className="mb-1.5 block text-sm font-medium text-muted">Farbe</span>
-          <div className="flex gap-2">
-            {Object.entries(HABIT_COLORS).map(([name, hex]) => (
+          <span className="t-foot mb-1.5 block font-medium text-ink-2">{T('Farbe', 'Colour')}</span>
+          <div className="flex flex-wrap gap-1">
+            {HABIT_COLORS.map((name) => (
               <button
                 type="button"
                 key={name}
                 onClick={() => patch({ color: name })}
-                className={`size-9 rounded-full transition ${draft.color === name ? 'ring-2 ring-ink ring-offset-2 ring-offset-bg' : ''}`}
-                style={{ background: hex }}
-                aria-label={`Farbe ${name}`}
+                className="flex size-11 items-center justify-center rounded-full"
+                style={{ background: draft.color === name ? habitTint(name, 18) : undefined }}
+                aria-label={habitColorName(name)}
+                title={habitColorName(name)}
                 aria-pressed={draft.color === name}
-              />
+              >
+                <span className={`size-8 rounded-full ${draft.color === name ? 'ring-2 ring-ink ring-offset-2 ring-offset-surface' : ''}`} style={{ background: habitColor(name) }} />
+              </button>
             ))}
           </div>
         </div>
 
         <div>
-          <span className="mb-1.5 block text-sm font-medium text-muted">Wie oft?</span>
-          <div className="grid grid-cols-4 gap-1 rounded-xl bg-surface-2 p-1">
-            {SCHEDULES.map((s) => (
-              <button
-                type="button"
-                key={s.value}
-                onClick={() => patch({ schedule_type: s.value })}
-                className={`rounded-lg px-1 py-2 text-sm font-medium transition ${draft.schedule_type === s.value ? 'bg-accent text-accent-ink shadow' : 'text-muted'}`}
-              >
-                {s.label}
-              </button>
-            ))}
-          </div>
+          <span className="t-foot mb-1.5 block font-medium text-ink-2">{T('Wie oft?', 'How often?')}</span>
+          <Segmented label={T('Wie oft?', 'How often?')} value={draft.schedule_type} options={schedules()} onChange={(v) => patch({ schedule_type: v })} className="[&_span]:text-[13px]" />
 
           {draft.schedule_type === 'weekdays' && (
             <div className="mt-3 grid grid-cols-7 gap-1">
-              {WEEKDAY_SHORT.map((label, idx) => {
-                const d = idx + 1
+              {[1, 2, 3, 4, 5, 6, 7].map((d) => {
+                const label = weekdayShort(d)
                 const on = draft.weekdays.includes(d)
                 return (
                   <button
                     type="button"
                     key={d}
                     onClick={() => patch({ weekdays: on ? draft.weekdays.filter((x) => x !== d) : [...draft.weekdays, d] })}
-                    className={`rounded-lg py-2 text-sm font-medium ${on ? 'bg-accent text-accent-ink' : 'bg-surface-2 text-muted'}`}
+                    className={`t-sub min-h-11 rounded-lg font-medium ${on ? 'bg-brand text-on-brand' : 'bg-fill text-ink-2'}`}
                     aria-pressed={on}
                   >
                     {label}
@@ -135,41 +130,41 @@ export function HabitEditor({ habit, onClose }: { habit?: Habit; onClose: () => 
 
           {(draft.schedule_type === 'per_week' || draft.schedule_type === 'per_month') && (
             <div className="mt-3 flex items-center gap-3">
-              <button type="button" className="size-10 rounded-xl bg-surface-2 text-xl" onClick={() => patch({ target: Math.max(1, draft.target - 1) })} aria-label="Weniger">−</button>
-              <span className="min-w-24 text-center font-semibold">
-                {Math.min(draft.target, maxTarget)}× pro {draft.schedule_type === 'per_week' ? 'Woche' : 'Monat'}
+              <button type="button" className="size-11 rounded-[10px] bg-fill text-xl" onClick={() => patch({ target: Math.max(1, draft.target - 1) })} aria-label={T('Weniger', 'Fewer')}>−</button>
+              <span className="t-num min-w-28 text-center font-semibold" aria-live="polite">
+                {draft.schedule_type === 'per_week' ? T(`${Math.min(draft.target, maxTarget)}× pro Woche`, `${Math.min(draft.target, maxTarget)}× a week`) : T(`${Math.min(draft.target, maxTarget)}× pro Monat`, `${Math.min(draft.target, maxTarget)}× a month`)}
               </span>
-              <button type="button" className="size-10 rounded-xl bg-surface-2 text-xl" onClick={() => patch({ target: Math.min(maxTarget, draft.target + 1) })} aria-label="Mehr">+</button>
+              <button type="button" className="size-11 rounded-[10px] bg-fill text-xl" onClick={() => patch({ target: Math.min(maxTarget, draft.target + 1) })} aria-label={T('Mehr', 'More')}>+</button>
             </div>
           )}
         </div>
 
-        <div className="rounded-2xl border border-line bg-surface-2 p-4">
-          <label className="flex items-center justify-between gap-3">
-            <span className="font-medium">Erinnern, wenn noch offen</span>
-            <input type="checkbox" className="size-5 accent-[var(--accent)]" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
+        <div className="card p-4">
+          <label className="flex min-h-11 items-center justify-between gap-3">
+            <span className="font-medium">{T('Erinnern, wenn noch offen', 'Remind me if still open')}</span>
+            <input type="checkbox" className="size-5 accent-[var(--brand)]" checked={remind} onChange={(e) => setRemind(e.target.checked)} />
           </label>
           {remind && (
             <div className="mt-3 grid grid-cols-2 gap-3">
-              <Field label="Um">
+              <Field label={T('Um', 'At')}>
                 <input className={inputClass} type="time" required value={draft.reminder_time ?? ''} onChange={(e) => patch({ reminder_time: e.target.value })} />
               </Field>
-              <Field label="Letzte Chance (optional)">
+              <Field label={T('Letzte Chance (optional)', 'Last call (optional)')}>
                 <input className={inputClass} type="time" value={draft.last_call_time ?? ''} onChange={(e) => patch({ last_call_time: e.target.value })} />
               </Field>
-              <p className="col-span-2 text-xs text-muted">
+              <p className="t-foot col-span-2 text-ink-2">
                 {draft.schedule_type === 'per_week' || draft.schedule_type === 'per_month'
-                  ? 'Sanft: Erinnerung erst, wenn das Ziel ohne heutigen Eintrag knapp wird.'
-                  : 'Nur wenn an dem Tag noch nichts eingetragen ist.'}
+                  ? T('Sanft: Erinnerung erst, wenn das Ziel ohne heutigen Eintrag knapp wird.', 'Gentle: you’re only reminded once the goal gets tight without today’s entry.')
+                  : T('Nur wenn an dem Tag noch nichts eingetragen ist.', 'Only if nothing has been entered that day.')}
               </p>
             </div>
           )}
         </div>
 
-        {error && <p className="text-sm text-danger">{error}</p>}
-        <div className="flex gap-2">
-          <Button type="button" variant="ghost" onClick={onClose} className="flex-1">Abbrechen</Button>
-          <Button type="submit" disabled={busy} className="flex-1">{busy ? 'Speichern …' : 'Speichern'}</Button>
+        {error && <p className="t-sub text-danger" role="alert">{error}</p>}
+        <div className="grid grid-cols-2 gap-2">
+          <Button type="button" variant="tinted" onClick={onClose}>{T('Abbrechen', 'Cancel')}</Button>
+          <Button type="submit" disabled={busy}>{busy ? T('Speichern …', 'Saving …') : T('Speichern', 'Save')}</Button>
         </div>
       </form>
     </Sheet>

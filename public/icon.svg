@@ -1,13 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1e40af"/>
-      <stop offset="0.5" stop-color="#2563eb"/>
-      <stop offset="1" stop-color="#38bdf8"/>
+    <linearGradient id="bg-gewohnheiten" x1="0" y1="0" x2="0" y2="1024" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8C2545"/>
+      <stop offset="1" stop-color="#5A1028"/>
+    </linearGradient>
+    <linearGradient id="gold-gewohnheiten" x1="0" y1="212" x2="0" y2="812" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#F0D08A"/>
+      <stop offset="1" stop-color="#C8963E"/>
     </linearGradient>
   </defs>
-  <rect width="512" height="512" fill="url(#g)"/>
-  <circle cx="256" cy="256" r="150" fill="none" stroke="#ffffff" stroke-opacity="0.25" stroke-width="34"/>
-  <path d="M256 106a150 150 0 1 1-130 75" fill="none" stroke="#ffffff" stroke-width="34" stroke-linecap="round"/>
-  <path d="M190 262l46 46 92-104" fill="none" stroke="#ffffff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+  <rect x="0" y="0" width="1024" height="1024" rx="230" ry="230" fill="url(#bg-gewohnheiten)"/>
+  <path d="M512 300 A212 212 0 1 1 310.4 446.5" fill="none" stroke="url(#gold-gewohnheiten)" stroke-linecap="round" stroke-linejoin="round" stroke-width="64"/>
+  <polyline points="416,520 488,592 620,448" fill="none" stroke="url(#gold-gewohnheiten)" stroke-linecap="round" stroke-linejoin="round" stroke-width="64"/>
+
 </svg>

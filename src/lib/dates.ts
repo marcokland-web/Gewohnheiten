@@ -1,7 +1,17 @@
 // Tage werden durchgehend als "YYYY-MM-DD" in lokaler Zeit behandelt.
 // Rechnen immer über 12:00 Uhr, damit Sommer-/Winterzeit nie einen Tag verschiebt.
 
-export const WEEKDAY_SHORT = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
+import { locale, T } from './i18n'
+
+/** Kurzer Wochentag nach ISO (1 = Mo … 7 = So) in der aktuellen Sprache: „Mo“ / „Mon“ */
+export function weekdayShort(iso: number): string {
+  // 2024-01-01 war ein Montag
+  return new Date(2024, 0, iso, 12).toLocaleDateString(locale(), { weekday: 'short' }).replace('.', '')
+}
+
+export function weekdayLong(iso: number): string {
+  return new Date(2024, 0, iso, 12).toLocaleDateString(locale(), { weekday: 'long' })
+}
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -49,5 +59,16 @@ export function daysInMonth(key: string): number {
 }
 
 export function formatDay(key: string, opts: Intl.DateTimeFormatOptions = { weekday: 'short', day: 'numeric', month: 'short' }): string {
-  return parseDay(key).toLocaleDateString('de-DE', opts)
+  return parseDay(key).toLocaleDateString(locale(), opts)
+}
+
+/** „Heute“, „Gestern“ oder der Wochentag */
+export function relativeDay(key: string, today: string): string {
+  if (key === today) return T('Heute', 'Today')
+  if (key === addDays(today, -1)) return T('Gestern', 'Yesterday')
+  return formatDay(key, { weekday: 'long' })
+}
+
+export function formatMonth(key: string, opts: Intl.DateTimeFormatOptions = { month: 'short' }): string {
+  return parseDay(key).toLocaleDateString(locale(), opts).replace('.', '')
 }
