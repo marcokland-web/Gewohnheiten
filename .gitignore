@@ -26,3 +26,7 @@ dist-ssr
 # Supabase CLI
 supabase/.temp
 freigabe/
+
+# Browser-Tests
+test-results/
+playwright-report/

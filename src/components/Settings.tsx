@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState } from 'react'
+import { accountOf, signOut, unsyncedEntries, type Account } from '../lib/auth'
 import { todayKey } from '../lib/dates'
 import { getLang, setLang, T, useLang, type Lang } from '../lib/i18n'
 import { disablePush, enablePush, getPushState, sendTestPush, type PushState } from '../lib/push'
@@ -279,72 +280,103 @@ function Export() {
 
 function Account() {
   useLang()
-  const [email, setEmail] = useState('')
-  const [open, setOpen] = useState(false)
-  const [password, setPassword] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [message, setMessage] = useState<Message>(null)
+  const [account, setAccount] = useState<Account | null>(null)
+  const [photoFailed, setPhotoFailed] = useState(false)
+  const [asking, setAsking] = useState(false)
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => setEmail(data.user?.email ?? ''))
+    // Aus der gespeicherten Sitzung (geht auch offline)
+    supabase.auth.getSession().then(({ data }) => setAccount(accountOf(data.session?.user)))
   }, [])
 
-  async function submit(e: FormEvent) {
-    e.preventDefault()
-    setBusy(true)
-    setMessage(null)
-    const { error } = await supabase.auth.updateUser({ password })
-    setBusy(false)
-    if (error) return setMessage({ ok: false, text: error.message })
-    setPassword('')
-    setOpen(false)
-    setMessage({ ok: true, text: T('Passwort geändert – gilt auch für die Zähler-App.', 'Password changed – also applies to the meter app.') })
-  }
+  const label = account?.name ?? account?.email ?? T('Angemeldet', 'Signed in')
+  const initial = (account?.name ?? account?.email ?? '?').trim().charAt(0).toUpperCase()
 
   return (
     <>
       <Group title={T('Konto', 'Account')}>
-        {email && (
-          <Row>
-            <span className="flex-1">{T('Angemeldet als', 'Signed in as')}</span>
-            <span className="t-sub min-w-0 truncate text-ink-2">{email}</span>
-          </Row>
-        )}
-        <Row className={open ? 'flex-col items-stretch py-3' : ''}>
-          {!open ? (
-            <>
-              <span className="flex-1">{T('Passwort', 'Password')}</span>
-              <button className="-mr-2 min-h-11 px-2 font-semibold text-brand" onClick={() => setOpen(true)}>
-                {T('Ändern', 'Change')}
-              </button>
-            </>
+        <Row className="py-3">
+          {account?.photo && !photoFailed ? (
+            <img src={account.photo} alt="" referrerPolicy="no-referrer" onError={() => setPhotoFailed(true)} className="size-10 shrink-0 rounded-full object-cover" />
           ) : (
-            <form onSubmit={submit} className="space-y-3">
-              {/* Verstecktes Benutzerfeld, damit der Passwort-Manager weiß, zu welchem Konto das Passwort gehört */}
-              <input type="email" autoComplete="username" value={email} readOnly hidden />
-              <Field label={T('Neues Passwort', 'New password')}>
-                <input className={inputClass} type="password" autoComplete="new-password" minLength={12} required value={password} onChange={(e) => setPassword(e.target.value)} />
-              </Field>
-              <p className="t-foot text-ink-2">
-                {T(
-                  'Tipp ins Feld – iPhone, iPad und Mac schlagen dann ein starkes Passwort vor und speichern es im Schlüsselbund. Mindestens 12 Zeichen.',
-                  'Tap the field – iPhone, iPad and Mac will suggest a strong password and save it to the keychain. At least 12 characters.',
-                )}
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                <Button type="button" variant="tinted" onClick={() => setOpen(false)}>{T('Abbrechen', 'Cancel')}</Button>
-                <Button type="submit" disabled={busy}>{busy ? T('Speichern …', 'Saving …') : T('Speichern', 'Save')}</Button>
-              </div>
-            </form>
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-brand-tint font-semibold text-brand" aria-hidden>
+              {initial}
+            </span>
           )}
+          <div className="min-w-0 flex-1">
+            <div className="truncate font-medium">{label}</div>
+            {account?.name && account.email && <div className="t-sub truncate text-ink-2">{account.email}</div>}
+            <div className="t-foot text-ink-2">{T('Angemeldet mit Google', 'Signed in with Google')}</div>
+          </div>
         </Row>
         <Row>
-          <button className="min-h-11 flex-1 text-left font-medium text-danger" onClick={() => supabase.auth.signOut()}>
+          <button className="min-h-11 flex-1 text-left font-medium text-danger" onClick={() => setAsking(true)}>
             {T('Abmelden', 'Sign out')}
           </button>
         </Row>
       </Group>
-      <Note message={message} />
+      {asking && <SignOutSheet onClose={() => setAsking(false)} />}
     </>
+  )
+}
+
+/** Rückfrage beim Abmelden: Daten auf dem Gerät löschen oder behalten (Studio-Regel). */
+function SignOutSheet({ onClose }: { onClose: () => void }) {
+  useLang()
+  const [busy, setBusy] = useState(false)
+  const [failed, setFailed] = useState(false)
+  const unsynced = unsyncedEntries()
+
+  async function run(clearLocalData: boolean) {
+    setBusy(true)
+    setFailed(false)
+    try {
+      await signOut({ clearLocalData })
+      // Die App wechselt danach von selbst zur Anmeldung
+    } catch {
+      setFailed(true)
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Sheet title={T('Abmelden?', 'Sign out?')} onClose={onClose}>
+      <p className="t-sub text-ink-2">
+        {T(
+          'Sollen deine Gewohnheiten und Einträge auch von diesem Gerät gelöscht werden? In deinem Konto bleiben sie erhalten.',
+          'Should your habits and entries also be removed from this device? They stay in your account.',
+        )}
+      </p>
+      {unsynced > 0 && (
+        <p className="t-sub mt-3 text-warning" role="alert">
+          {unsynced === 1
+            ? T(
+                'Achtung: 1 Eintrag ist noch nicht übertragen. Beim Löschen geht er verloren; mit „Nur abmelden“ wird er bei der nächsten Anmeldung nachgereicht.',
+                'Careful: 1 entry hasn’t synced yet. Removing it from the device loses it; with “Just sign out” it’s sent the next time you sign in.',
+              )
+            : T(
+                `Achtung: ${unsynced} Einträge sind noch nicht übertragen. Beim Löschen gehen sie verloren; mit „Nur abmelden“ werden sie bei der nächsten Anmeldung nachgereicht.`,
+                `Careful: ${unsynced} entries haven’t synced yet. Removing them from the device loses them; with “Just sign out” they’re sent the next time you sign in.`,
+              )}
+        </p>
+      )}
+      {failed && (
+        <p className="t-sub mt-3 text-danger" role="alert">
+          {T('Abmelden hat nicht geklappt. Versuch es noch einmal.', 'Signing out didn’t work. Please try again.')}
+        </p>
+      )}
+      <div className="mt-5 flex flex-col gap-2">
+        <Button variant="destructive" disabled={busy} onClick={() => run(true)}>
+          {T('Abmelden und vom Gerät löschen', 'Sign out and remove from device')}
+        </Button>
+        <Button variant="tinted" disabled={busy} onClick={() => run(false)}>
+          {T('Nur abmelden', 'Just sign out')}
+        </Button>
+        {/* Startfokus auf „Abbrechen“: Enter darf nie versehentlich Daten löschen */}
+        <button data-autofocus disabled={busy} onClick={onClose} className="min-h-11 rounded-[10px] px-4 font-semibold text-brand disabled:opacity-50">
+          {T('Abbrechen', 'Cancel')}
+        </button>
+      </div>
+    </Sheet>
   )
 }

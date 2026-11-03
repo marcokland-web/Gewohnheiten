@@ -7,6 +7,7 @@ import { Settings } from './components/Settings'
 import { NavContext, type Tab } from './components/Shell'
 import { Today } from './components/Today'
 import { IconX } from './components/ui'
+import { handleAuthCallback } from './lib/auth'
 import { T, useLang } from './lib/i18n'
 import { dismissError, endSession, startSession, useStore } from './lib/store'
 import { supabase, supabaseConfigured } from './lib/supabase'
@@ -25,6 +26,8 @@ export default function App() {
   const { habits, error } = useStore()
 
   useEffect(() => {
+    // Rückkehr von Google: Code gegen Sitzung tauschen, Adresse säubern
+    void handleAuthCallback()
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         setAuthState('in')

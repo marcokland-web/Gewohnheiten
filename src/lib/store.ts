@@ -108,18 +108,30 @@ export async function startSession(userId: string) {
   await refresh()
 }
 
+/**
+ * Sitzung im Speicher beenden. Zwischenspeicher und Warteschlange bleiben auf dem
+ * Gerät und werden bei der nächsten Anmeldung desselben Kontos nachgereicht
+ * (z. B. wenn die Sitzung von selbst abläuft). Löschen: `clearDeviceData`.
+ */
 export async function endSession() {
-  const uid = state.userId
-  if (uid) {
-    try {
-      await del(cacheKey(uid))
-      await del(queueKey(uid))
-    } catch {
-      /* egal */
-    }
-  }
   setState({ userId: null, habits: [], checkins: {}, queue: [], loaded: false, error: null })
 }
+
+/** Zwischengespeicherte Gewohnheiten, Einträge und Warteschlange eines Kontos vom Gerät löschen. */
+export async function clearDeviceData(uid: string | null) {
+  if (!uid) return
+  try {
+    await del(cacheKey(uid))
+    await del(queueKey(uid))
+  } catch {
+    /* egal */
+  }
+}
+
+export const currentUserId = () => state.userId
+
+/** Anzahl noch nicht übertragener Einträge */
+export const pendingCount = () => state.queue.length
 
 async function syncProfile() {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone

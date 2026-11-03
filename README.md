@@ -1,6 +1,6 @@
 # 🌱 Gewohnheiten
 
-Gewohnheiten-Tracker als installierbare Web-App (Browser, iPad, iPhone) mit blauem Verlauf,
+Gewohnheiten-Tracker als installierbare Web-App (Browser, iPad, iPhone) im Studio-Design,
 Hell-/Dunkelmodus, Serien, Statistik, Notizen und Offline-Einträgen.
 
 **Technik:** Vite · React · TypeScript · Tailwind CSS · vite-plugin-pwa · Supabase
@@ -22,7 +22,8 @@ knapp wird (fehlende Einträge ≥ verbleibende Tage). Die App markiert solche G
 ## Einrichtung
 
 Die App nutzt das **Supabase-Projekt der Zähler-App** mit, aber im eigenen Schema `gewohnheiten`.
-Login mit demselben Konto (E-Mail + Passwort).
+Anmeldung **nur mit Google** (kein Passwort). Supabase verknüpft die Google-Identität automatisch mit
+einem vorhandenen Konto gleicher, bestätigter E-Mail-Adresse – die `user_id` und damit alle Daten bleiben.
 
 1. **Datenbank:** Supabase → *SQL Editor* → Inhalt von [`supabase/001_schema.sql`](supabase/001_schema.sql) ausführen.
 2. **Schema freigeben:** Supabase → *Project Settings* → *Data API* → *Exposed schemas* um `gewohnheiten` ergänzen.
@@ -31,9 +32,37 @@ Login mit demselben Konto (E-Mail + Passwort).
    npm install
    npm run dev
    ```
-4. **Veröffentlichung:** passiert automatisch bei jedem Push auf `main` (GitHub Actions → GitHub Pages).
+4. **Google-Anmeldung in Supabase einrichten** (einmalig, im Dashboard):
+   - *Authentication → Sign In / Providers → Google* einschalten, Client-ID und Client-Secret aus der
+     Google Cloud Console eintragen (OAuth-Client „Webanwendung“, autorisierte Weiterleitungs-URI:
+     `https://asfwbuptsfcrgmmgdgim.supabase.co/auth/v1/callback`).
+   - *Authentication → URL Configuration → Redirect URLs* um
+     `https://marcokland-web.github.io/Gewohnheiten/` und `http://localhost:5173/Gewohnheiten/` ergänzen.
+     Fehlt die Adresse, leitet Supabase auf die *Site URL* (Zähler-App) zurück.
+5. **Veröffentlichung:** passiert automatisch bei jedem Push auf `main` (GitHub Actions → GitHub Pages).
    Dafür im Repo unter *Settings → Secrets and variables → Actions* `VITE_SUPABASE_URL` und
    `VITE_SUPABASE_ANON_KEY` setzen.
+
+## Anmeldung
+
+- „Mit Google anmelden“ leitet weiter (kein Pop-up, damit es auch in der installierten App geht),
+  PKCE-Flow. Nach der Rückkehr tauscht `src/lib/auth.ts` den `?code=` gegen eine Sitzung und säubert die
+  Adresse. Abbrechen bei Google ist kein Fehler; andere Fehler erscheinen verständlich auf Deutsch/Englisch.
+- Abmelden (*Einstellungen → Konto*) nur auf diesem Gerät, mit Rückfrage: „Abmelden und vom Gerät löschen“
+  (Zwischenspeicher, Warteschlange, Erinnerungen dieses Geräts) oder „Nur abmelden“ (nicht übertragene
+  Einträge werden bei der nächsten Anmeldung nachgereicht).
+- Serverseitig hängt nichts von der Anmeldeart ab (RLS über `auth.uid()`, Edge Function prüft nur das JWT).
+
+## Tests
+
+```bash
+npm test          # Unit-Tests (Vitest, tests/unit)
+npm run test:e2e  # Browser-Tests (Playwright, tests/e2e) gegen ein erfundenes Supabase
+```
+
+Die Browser-Tests fangen alle Anfragen an `*.supabase.co` ab (Google-Weiterleitung, Code-Tausch, REST),
+die echte Datenbank wird nie berührt. `tests/e2e/ansicht.spec.ts` prüft Desktop, iPad und iPhone in Hell
+und Dunkel und legt Bilder in `test-results/ansicht/` ab. Einmalig: `npx playwright install chromium`.
 
 Auf iPhone/iPad: in Safari öffnen → Teilen → *Zum Home-Bildschirm*. (Nur so funktionieren später
 die Push-Erinnerungen.)

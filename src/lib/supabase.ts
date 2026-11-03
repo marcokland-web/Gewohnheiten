@@ -8,5 +8,12 @@ export const supabaseConfigured = Boolean(url && key)
 // Gemeinsames Projekt mit der Zähler-App: alle Tabellen liegen im Schema "gewohnheiten"
 export const supabase = createClient(url ?? 'http://localhost', key ?? 'missing', {
   db: { schema: 'gewohnheiten' },
-  auth: { persistSession: true, autoRefreshToken: true, storageKey: 'gewohnheiten-auth' },
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    storageKey: 'gewohnheiten-auth',
+    // Anmeldung mit Google per PKCE; die Rückleitung (?code=…) wertet src/lib/auth.ts selbst aus
+    flowType: 'pkce',
+    detectSessionInUrl: false,
+  },
 })
