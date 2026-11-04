@@ -227,3 +227,23 @@ test('Content-Security-Policy ist gesetzt und blockiert nichts', async ({ page }
   expect(blocked).toBe(true)
   expect(violations.filter((v) => !v.includes('example.com'))).toEqual([])
 })
+
+test('Echte Hook-Antwort beim Code-Tausch (403, error_code unknown): „Kein Zugang“', async ({ page }) => {
+  await mockSupabase(page, { token: { status: 403, body: { code: 403, error_code: 'unknown', msg: 'Kein Zugang – bitte von der Familie freischalten lassen.' } } })
+  await page.goto('./')
+  await googleButton(page).click()
+  await expect(page.getByRole('alert')).toHaveText('Kein Zugang – bitte von der Familie freischalten lassen.')
+})
+
+test('Echte Hook-Antwort in der Rückleitung (server_error/unknown): „Kein Zugang“, auch auf Englisch', async ({ page }) => {
+  const q = new URLSearchParams({ error: 'server_error', error_code: 'unknown', error_description: 'Kein Zugang – bitte von der Familie freischalten lassen.' }).toString()
+  await mockSupabase(page, { callback: `#${q}` })
+  await page.goto('./')
+  await googleButton(page).click()
+  await expect(page.getByRole('alert')).toHaveText('Kein Zugang – bitte von der Familie freischalten lassen.')
+  expect(page.url()).toBe('http://localhost:5199/Gewohnheiten/')
+  await page.getByRole('button', { name: 'Einstellungen' }).click()
+  await page.getByRole('radio', { name: 'English' }).check()
+  await page.getByRole('button', { name: 'Done' }).click()
+  await expect(page.getByRole('alert')).toHaveText('No access – ask your family to add you.')
+})

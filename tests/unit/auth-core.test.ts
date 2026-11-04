@@ -103,3 +103,20 @@ describe('abgelaufen ohne Fehlercode', () => {
     expect(parseCallback(`${APP}?error=invalid_request&error_description=OAuth+state+parameter+missing`)).toMatchObject({ type: 'error', error: { kind: 'expired' } })
   })
 })
+
+describe('echte Antwort des Before-User-Created-Hooks', () => {
+  const msg = 'Kein Zugang – bitte von der Familie freischalten lassen.'
+  it('beim Code-Tausch: HTTP 403, error_code unknown', () => {
+    expect(classifyExchangeError({ name: 'AuthApiError', code: 'unknown', message: msg, status: 403 }).kind).toBe('no-account')
+  })
+  it('in der Rückleitung mit generischem error/error_code (Query und Hash)', () => {
+    const q = new URLSearchParams({ error: 'server_error', error_code: 'unknown', error_description: msg }).toString()
+    expect(parseCallback(`${APP}?${q}`)).toMatchObject({ type: 'error', error: { kind: 'no-account' } })
+    expect(parseCallback(`${APP}#${q}`)).toMatchObject({ type: 'error', error: { kind: 'no-account' } })
+  })
+  it('403 mit flow_state_expired/bad_code_verifier bleibt „abgelaufen“', () => {
+    expect(classifyExchangeError({ name: 'AuthApiError', code: 'flow_state_expired', message: 'Forbidden', status: 403 }).kind).toBe('expired')
+    expect(classifyExchangeError({ name: 'AuthApiError', code: 'bad_code_verifier', status: 403 }).kind).toBe('expired')
+    expect(parseCallback(`${APP}?error=invalid_request&error_code=flow_state_expired&error_description=403+Forbidden`)).toMatchObject({ type: 'error', error: { kind: 'expired' } })
+  })
+})

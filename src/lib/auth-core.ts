@@ -34,7 +34,8 @@ const EXPIRED_TEXT = /flow state|code verifier|code challenge|oauth state/i
 /** Registrierung gesperrt: `signup_disabled` oder Ablehnung durch einen Auth-Hook (HTTP 403). */
 export function isNoAccess(code: string | null | undefined, text: string | null | undefined, status?: number): boolean {
   if (code === 'signup_disabled' || /^hook/.test(code ?? '')) return true
-  if (/signups? not allowed|hook/i.test(text ?? '')) return true
+  // Meldung des Before-User-Created-Hooks: „Kein Zugang – bitte von der Familie freischalten lassen.“
+  if (/signups? not allowed|hook|kein zugang|freischalten/i.test(text ?? '')) return true
   if (/\b403\b|forbidden/i.test(`${code ?? ''} ${text ?? ''}`)) return true
   return status === 403
 }
@@ -49,15 +50,16 @@ export function parseCallback(href: string): Callback {
   const errorCode = get('error_code')
   const description = get('error_description') ?? undefined
   if (error || errorCode) {
+    // Abgelaufen geht vor (auch wenn ein 403 mitkommt)
+    if (EXPIRED_CODES.includes(errorCode ?? '') || EXPIRED_TEXT.test(description ?? '')) {
+      return { type: 'error', error: { kind: 'expired', detail: errorCode ?? description } }
+    }
     // Registrierung gesperrt (Einstellung oder Before-User-Created-Hook mit HTTP 403): kein Abbruch
     if (isNoAccess(errorCode, description)) {
       return { type: 'error', error: { kind: 'no-account', detail: description ?? errorCode ?? undefined } }
     }
     // Abbruch bei Google („Abbrechen“ oder Fenster geschlossen) ist kein Fehler
     if (error === 'access_denied' && (!errorCode || errorCode === 'access_denied')) return { type: 'cancelled' }
-    if (EXPIRED_CODES.includes(errorCode ?? '') || EXPIRED_TEXT.test(description ?? '')) {
-      return { type: 'error', error: { kind: 'expired', detail: errorCode ?? description } }
-    }
     if (errorCode === 'provider_disabled' || errorCode === 'validation_failed') {
       return { type: 'error', error: { kind: 'provider', detail: description ?? errorCode } }
     }
