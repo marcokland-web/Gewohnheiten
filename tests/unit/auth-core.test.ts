@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { accountOf, classifyExchangeError, cleanUrl, parseCallback, redirectUrl } from '../../src/lib/auth-core'
+import { accountOf, classifyExchangeError, cleanUrl, isNoAccess, parseCallback, redirectUrl } from '../../src/lib/auth-core'
 
 const APP = 'https://marcokland-web.github.io/Gewohnheiten/'
 
@@ -80,5 +80,26 @@ describe('accountOf', () => {
   })
   it('ohne Nutzer: null', () => {
     expect(accountOf(null)).toBeNull()
+  })
+})
+
+describe('kein Zugang (Registrierung gesperrt)', () => {
+  it('Auth-Hook mit HTTP 403 in Query oder Hash ist kein Abbruch', () => {
+    expect(parseCallback(`${APP}?error=access_denied&error_code=hook_rejected&error_description=status+code+403`)).toMatchObject({ type: 'error', error: { kind: 'no-account' } })
+    expect(parseCallback(`${APP}#error=server_error&error_description=Error+running+hook+URI`)).toMatchObject({ type: 'error', error: { kind: 'no-account' } })
+  })
+  it('beim Code-Tausch', () => {
+    expect(classifyExchangeError({ name: 'AuthApiError', code: 'signup_disabled' }).kind).toBe('no-account')
+    expect(classifyExchangeError({ name: 'AuthApiError', message: 'Forbidden', status: 403 }).kind).toBe('no-account')
+  })
+  it('normaler Abbruch bleibt Abbruch', () => {
+    expect(isNoAccess('access_denied', 'The user denied the request')).toBe(false)
+  })
+})
+
+describe('abgelaufen ohne Fehlercode', () => {
+  it('erkennt den Text', () => {
+    expect(classifyExchangeError({ name: 'AuthApiError', message: 'invalid flow state, no valid flow state found', status: 404 }).kind).toBe('expired')
+    expect(parseCallback(`${APP}?error=invalid_request&error_description=OAuth+state+parameter+missing`)).toMatchObject({ type: 'error', error: { kind: 'expired' } })
   })
 })

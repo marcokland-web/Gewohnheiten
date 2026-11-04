@@ -3,7 +3,7 @@ import { classifyExchangeError, cleanUrl, parseCallback, redirectUrl, type AuthE
 import { T } from './i18n'
 import { disablePush } from './push'
 import { clearDeviceData, currentUserId, endSession, pendingCount } from './store'
-import { supabase } from './supabase'
+import { STORAGE_KEY, supabase } from './supabase'
 
 // ---------------------------------------------------------------------
 // Anmeldung nur mit Google (Supabase Auth, PKCE).
@@ -112,10 +112,29 @@ export const unsyncedEntries = pendingCount
 export async function signOut({ clearLocalData }: { clearLocalData: boolean }) {
   const uid = currentUserId()
   if (clearLocalData) await withTimeout(stopRemindersOnDevice(), 3000).catch(() => undefined)
-  await supabase.auth.signOut({ scope: 'local' })
+  // Mit abgelaufener Sitzung und ohne Netz versucht Supabase erst lange, die Sitzung zu erneuern,
+  // und meldet dann einen Fehler, ohne abzumelden. Dann die Sitzung selbst vom Gerät entfernen.
+  const result = await withTimeout(
+    supabase.auth.signOut({ scope: 'local' }).catch((e: Error) => ({ error: e })),
+    2500,
+  )
+  const ok = result !== undefined && !result.error
+  if (!ok) removeStoredSession()
   await endSession()
   if (clearLocalData) await clearDeviceData(uid)
   setState({ error: null, redirecting: false })
+  // Der Supabase-Client hält die Sitzung noch im Speicher: frisch starten
+  if (!ok) window.location.reload()
+}
+
+/** Sitzung, Nutzer und PKCE-Verifier dieses Geräts aus dem Speicher löschen. */
+function removeStoredSession() {
+  try {
+    supabase.auth.stopAutoRefresh().catch(() => undefined)
+    for (const k of Object.keys(localStorage)) if (k === STORAGE_KEY || k.startsWith(`${STORAGE_KEY}-`)) localStorage.removeItem(k)
+  } catch {
+    /* Speicher gesperrt */
+  }
 }
 
 /** Erinnerungen auf diesem Gerät abmelden, nur wenn ein Service Worker da ist (sonst wartet `ready` ewig). */
@@ -139,16 +158,13 @@ export function authErrorText(error: AuthError): string {
         'The sign-in expired or was started in another window. Tap “Sign in with Google” again.',
       )
     case 'no-account':
-      return T(
-        'Für dieses Google-Konto gibt es hier noch keinen Zugang. Nimm dieselbe E-Mail-Adresse wie in der Zähler-App oder frag Marco.',
-        'There’s no access for this Google account yet. Use the same email address as in the meter app or ask Marco.',
-      )
+      return T('Kein Zugang – bitte von der Familie freischalten lassen.', 'No access – ask your family to add you.')
     case 'provider':
       return T(
         'Die Anmeldung mit Google ist gerade nicht eingerichtet. Sag Marco Bescheid.',
         'Sign-in with Google isn’t set up right now. Let Marco know.',
       )
     default:
-      return T('Anmelden hat nicht geklappt. Versuch es noch einmal.', 'Sign-in didn’t work. Please try again.')
+      return T('Anmelden hat nicht geklappt. Versuch es noch einmal.', "Sign-in didn't work. Please try again.")
   }
 }

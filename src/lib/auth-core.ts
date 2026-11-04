@@ -27,6 +27,18 @@ export type Callback =
 
 const CALLBACK_PARAMS = ['code', 'error', 'error_code', 'error_description', 'state', 'sb_flow_id']
 
+const EXPIRED_CODES = ['pkce_code_verifier_not_found', 'flow_state_not_found', 'flow_state_expired', 'bad_code_verifier', 'bad_oauth_state', 'bad_oauth_callback']
+// Ohne Versions-Header liefert Supabase keinen Fehlercode, nur den Text (z. B. „invalid flow state, no valid flow state found“)
+const EXPIRED_TEXT = /flow state|code verifier|code challenge|oauth state/i
+
+/** Registrierung gesperrt: `signup_disabled` oder Ablehnung durch einen Auth-Hook (HTTP 403). */
+export function isNoAccess(code: string | null | undefined, text: string | null | undefined, status?: number): boolean {
+  if (code === 'signup_disabled' || /^hook/.test(code ?? '')) return true
+  if (/signups? not allowed|hook/i.test(text ?? '')) return true
+  if (/\b403\b|forbidden/i.test(`${code ?? ''} ${text ?? ''}`)) return true
+  return status === 403
+}
+
 /** Liest `?code=` bzw. `?error=` (auch im `#`-Teil, so meldet Supabase manche Fehler). */
 export function parseCallback(href: string): Callback {
   const url = new URL(href)
@@ -37,13 +49,14 @@ export function parseCallback(href: string): Callback {
   const errorCode = get('error_code')
   const description = get('error_description') ?? undefined
   if (error || errorCode) {
-    if (errorCode === 'signup_disabled' || /signups? not allowed/i.test(description ?? '')) {
-      return { type: 'error', error: { kind: 'no-account', detail: description } }
+    // Registrierung gesperrt (Einstellung oder Before-User-Created-Hook mit HTTP 403): kein Abbruch
+    if (isNoAccess(errorCode, description)) {
+      return { type: 'error', error: { kind: 'no-account', detail: description ?? errorCode ?? undefined } }
     }
     // Abbruch bei Google („Abbrechen“ oder Fenster geschlossen) ist kein Fehler
     if (error === 'access_denied' && (!errorCode || errorCode === 'access_denied')) return { type: 'cancelled' }
-    if (errorCode === 'flow_state_expired' || errorCode === 'flow_state_not_found' || errorCode === 'bad_oauth_state') {
-      return { type: 'error', error: { kind: 'expired', detail: errorCode } }
+    if (EXPIRED_CODES.includes(errorCode ?? '') || EXPIRED_TEXT.test(description ?? '')) {
+      return { type: 'error', error: { kind: 'expired', detail: errorCode ?? description } }
     }
     if (errorCode === 'provider_disabled' || errorCode === 'validation_failed') {
       return { type: 'error', error: { kind: 'provider', detail: description ?? errorCode } }
@@ -69,13 +82,10 @@ export function classifyExchangeError(e: { name?: string; code?: string; message
   if (e.name === 'AuthRetryableFetchError' || (typeof navigator !== 'undefined' && navigator.onLine === false) || /failed to fetch|network/i.test(e.message ?? '')) {
     return { kind: 'offline', detail: e.message }
   }
-  if (
-    e.name === 'AuthPKCECodeVerifierMissingError' ||
-    ['pkce_code_verifier_not_found', 'flow_state_not_found', 'flow_state_expired', 'bad_code_verifier', 'bad_oauth_state', 'bad_oauth_callback'].includes(code)
-  ) {
+  if (e.name === 'AuthPKCECodeVerifierMissingError' || EXPIRED_CODES.includes(code) || EXPIRED_TEXT.test(e.message ?? '')) {
     return { kind: 'expired', detail: code || e.name }
   }
-  if (code === 'signup_disabled') return { kind: 'no-account', detail: code }
+  if (isNoAccess(code, e.message, e.status)) return { kind: 'no-account', detail: code || e.message }
   return { kind: 'unknown', detail: code || e.message }
 }
 

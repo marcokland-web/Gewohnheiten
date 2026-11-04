@@ -10,10 +10,21 @@ import { IconX } from './components/ui'
 import { handleAuthCallback } from './lib/auth'
 import { T, useLang } from './lib/i18n'
 import { dismissError, endSession, startSession, useStore } from './lib/store'
-import { supabase, supabaseConfigured } from './lib/supabase'
+import { STORAGE_KEY, supabase, supabaseConfigured } from './lib/supabase'
 import { useTheme } from './lib/theme'
 
 type Editor = { habitId?: string } | null
+
+/** Nutzer der auf dem Gerät gespeicherten Sitzung (ohne Netz lesbar) */
+function storedUserId(): string | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    const id = raw ? (JSON.parse(raw) as { user?: { id?: unknown } }).user?.id : null
+    return typeof id === 'string' ? id : null
+  } catch {
+    return null
+  }
+}
 
 export default function App() {
   useTheme()
@@ -28,7 +39,9 @@ export default function App() {
   useEffect(() => {
     // Rückkehr von Google: Code gegen Sitzung tauschen, Adresse säubern
     void handleAuthCallback()
+    let settled = false
     const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+      settled = true
       if (session) {
         setAuthState('in')
         void startSession(session.user.id)
@@ -40,7 +53,18 @@ export default function App() {
         setSettingsOpen(false)
       }
     })
-    return () => data.subscription.unsubscribe()
+    // Ohne Netz mit abgelaufener Sitzung versucht Supabase lange, sie zu erneuern, bevor es sich meldet.
+    // Dann nach kurzer Zeit die gespeicherte Sitzung nehmen (Daten aus dem Zwischenspeicher) bzw. die Anmeldung zeigen.
+    const fallback = setTimeout(() => {
+      if (settled) return
+      const uid = storedUserId()
+      setAuthState(uid ? 'in' : 'out')
+      if (uid) void startSession(uid)
+    }, 1500)
+    return () => {
+      clearTimeout(fallback)
+      data.subscription.unsubscribe()
+    }
   }, [])
 
   useEffect(() => window.scrollTo(0, 0), [tab, detailId])

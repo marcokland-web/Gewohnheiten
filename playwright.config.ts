@@ -8,6 +8,8 @@ const PORT = 5199
 export default defineConfig({
   testDir: 'tests/e2e',
   fullyParallel: true,
+  // Begrenzte Parallelität: unter hoher Last auf dem Mac sonst Zeitüberschreitungen
+  workers: 3,
   forbidOnly: !!process.env.CI,
   reporter: [['list']],
   use: {

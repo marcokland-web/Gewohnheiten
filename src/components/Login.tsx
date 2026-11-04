@@ -53,8 +53,8 @@ export function Login() {
           )}
           <p className="t-foot text-center text-ink-2">
             {T(
-              'Mit derselben E-Mail-Adresse wie in der Zähler-App landest du in deinem bisherigen Konto.',
-              'Use the same email address as in the meter app to get to your existing account.',
+              'Mit derselben E-Mail-Adresse wie in Zählerstände landest du in deinem bisherigen Konto.',
+              'Use the same email address as in Zählerstände to get to your existing account.',
             )}
           </p>
         </div>
@@ -69,7 +69,7 @@ function GoogleButton({ busy, onClick }: { busy: boolean; onClick: () => void })
   return (
     <button type="button" className="gsi-btn" onClick={onClick} disabled={busy} aria-busy={busy}>
       <GoogleLogo />
-      <span>{busy ? T('Weiter zu Google …', 'Opening Google …') : T('Mit Google anmelden', 'Sign in with Google')}</span>
+      <span>{busy ? T('Google wird geöffnet …', 'Opening Google …') : T('Mit Google anmelden', 'Sign in with Google')}</span>
     </button>
   )
 }

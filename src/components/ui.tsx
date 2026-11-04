@@ -24,6 +24,9 @@ export function habitColorName(c: string): string {
   return T(de, en)
 }
 
+/** Offene Sheets, oberstes zuletzt: Esc und Tab wirken nur im obersten */
+const sheetStack: object[] = []
+
 /** iPhone: Sheet von unten mit Griff. iPad/Desktop: Dialog in der Mitte (max. 440 px). */
 export function Sheet({
   title,
@@ -54,7 +57,11 @@ export function Sheet({
     const el = panel.current!
     if (!el.contains(document.activeElement)) (el.querySelector<HTMLElement>('[data-autofocus]') ?? el).focus()
 
+    const token = {}
+    sheetStack.push(token)
+
     const onKey = (e: KeyboardEvent) => {
+      if (sheetStack[sheetStack.length - 1] !== token) return
       if (e.key === 'Escape') return closeRef.current()
       if (e.key !== 'Tab') return
       // Fokus bleibt im Dialog
@@ -73,6 +80,7 @@ export function Sheet({
     window.addEventListener('keydown', onKey)
     return () => {
       window.removeEventListener('keydown', onKey)
+      sheetStack.splice(sheetStack.indexOf(token), 1)
       document.body.style.overflow = prev
       // Nur entsperren, wenn kein weiteres Sheet offen ist
       if (!document.querySelector('[data-sheet]')) root?.removeAttribute('inert')

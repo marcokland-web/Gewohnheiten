@@ -64,6 +64,12 @@
   --aura-2: rgb(227 184 102 / 0.26);
   --aura-3: rgb(122 30 58 / 0.1);
   --card-shadow: 0 1px 2px rgb(90 16 40 / 0.06), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  /* „Mit Google anmelden“: Farben nach Googles Gestaltungsregeln */
+  --gsi-bg: #ffffff;
+  --gsi-edge: #747775;
+  --gsi-ink: #1f1f1f;
+  --gsi-hover: #f7f8f8;
+  --gsi-shadow: 0 1px 2px rgb(60 64 67 / 0.3), 0 1px 3px 1px rgb(60 64 67 / 0.15);
   color-scheme: light;
 }
 
@@ -103,6 +109,11 @@
   --aura-2: rgb(227 184 102 / 0.12);
   --aura-3: rgb(122 30 58 / 0.3);
   --card-shadow: inset 0 1px 0 rgb(255 255 255 / 0.06);
+  --gsi-bg: #131314;
+  --gsi-edge: #8e918f;
+  --gsi-ink: #e3e3e3;
+  --gsi-hover: #1f1f20;
+  --gsi-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 1px 3px 1px rgb(0 0 0 / 0.3);
   color-scheme: dark;
 }
 
@@ -265,9 +276,9 @@ body {
   gap: 10px;
   padding: 0 16px 0 12px;
   border-radius: 999px;
-  border: 1px solid #747775;
-  background: #ffffff;
-  color: #1f1f1f;
+  border: 1px solid var(--gsi-edge);
+  background: var(--gsi-bg);
+  color: var(--gsi-ink);
   font-size: 15px;
   line-height: 20px;
   font-weight: 500;
@@ -275,8 +286,8 @@ body {
   transition: background-color 120ms, box-shadow 120ms;
 }
 .gsi-btn:hover:not(:disabled) {
-  background-color: #f7f8f8;
-  box-shadow: 0 1px 2px rgb(60 64 67 / 0.3), 0 1px 3px 1px rgb(60 64 67 / 0.15);
+  background-color: var(--gsi-hover);
+  box-shadow: var(--gsi-shadow);
 }
 .gsi-btn:disabled {
   opacity: 0.62;
@@ -286,15 +297,6 @@ body {
   width: 20px;
   height: 20px;
   flex-shrink: 0;
-}
-:root[data-theme='dark'] .gsi-btn {
-  border-color: #8e918f;
-  background: #131314;
-  color: #e3e3e3;
-}
-:root[data-theme='dark'] .gsi-btn:hover:not(:disabled) {
-  background-color: #1f1f20;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.5), 0 1px 3px 1px rgb(0 0 0 / 0.3);
 }
 
 /* Kleiner Lade-Kreis */

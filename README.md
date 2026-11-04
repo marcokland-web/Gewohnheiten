@@ -51,6 +51,8 @@ einem vorhandenen Konto gleicher, bestätigter E-Mail-Adresse – die `user_id` 
 - Abmelden (*Einstellungen → Konto*) nur auf diesem Gerät, mit Rückfrage: „Abmelden und vom Gerät löschen“
   (Zwischenspeicher, Warteschlange, Erinnerungen dieses Geräts) oder „Nur abmelden“ (nicht übertragene
   Einträge werden bei der nächsten Anmeldung nachgereicht).
+- Ist die Registrierung gesperrt (Einstellung oder Before-User-Created-Hook mit 403), erscheint „Kein Zugang – bitte von der Familie freischalten lassen.“
+- Content-Security-Policy: `connect-src` nur zur eigenen Seite und zum Supabase-Projekt (siehe `vite.config.ts`).
 - Serverseitig hängt nichts von der Anmeldeart ab (RLS über `auth.uid()`, Edge Function prüft nur das JWT).
 
 ## Tests

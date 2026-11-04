@@ -52,6 +52,9 @@ for (const v of VIEWS) {
           await expect(b).toBeInViewport()
           expect((await b.boundingBox())!.height).toBeGreaterThanOrEqual(44)
         }
+        // „Nur abmelden“ hat einen sichtbaren Rand (im Dunkeln sonst unsichtbar)
+        const edge = await ask.getByRole('button', { name: 'Nur abmelden' }).evaluate((b) => getComputedStyle(b).borderTopWidth)
+        expect(edge).toBe('1px')
         await noSideScroll(page)
         await page.screenshot({ path: `test-results/ansicht/${v.name}-${theme}-3-abmelden.png` })
       })

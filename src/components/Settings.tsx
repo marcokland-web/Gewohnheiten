@@ -369,7 +369,7 @@ function SignOutSheet({ onClose }: { onClose: () => void }) {
         <Button variant="destructive" disabled={busy} onClick={() => run(true)}>
           {T('Abmelden und vom Gerät löschen', 'Sign out and remove from device')}
         </Button>
-        <Button variant="tinted" disabled={busy} onClick={() => run(false)}>
+        <Button variant="tinted" className="border border-separator" disabled={busy} onClick={() => run(false)}>
           {T('Nur abmelden', 'Just sign out')}
         </Button>
         {/* Startfokus auf „Abbrechen“: Enter darf nie versehentlich Daten löschen */}
