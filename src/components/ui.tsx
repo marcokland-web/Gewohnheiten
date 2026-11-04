@@ -92,7 +92,7 @@ export function Sheet({
     <div className="fixed inset-0 z-50 flex items-end justify-center md:items-center" role="dialog" aria-modal="true" aria-labelledby={titleId} data-sheet>
       <div className="absolute inset-0 bg-[rgb(20_10_15/0.32)] backdrop-blur-[6px]" onClick={onClose} />
       <div ref={panel} tabIndex={-1} className="glass-strong sheet-in relative max-h-[92dvh] w-full overflow-x-hidden overflow-y-auto rounded-t-[20px] px-4 pb-safe outline-none md:max-w-[440px] md:rounded-[20px] md:px-5 md:pb-5">
-        <div className="sticky top-0 z-10 -mx-4 mb-4 bg-[color-mix(in_srgb,var(--surface)_94%,transparent)] px-4 pt-2 md:-mx-5 md:px-5 md:pt-4">
+        <div className="sticky top-0 z-10 -mx-4 mb-4 bg-surface px-4 pt-2 md:-mx-5 md:px-5 md:pt-4">
         <div className="mx-auto mb-2 h-1.5 w-9 rounded-full bg-separator md:hidden" aria-hidden />
         <div className="flex min-h-11 items-center justify-between gap-3 pb-1">
           <h2 id={titleId} className="t-headline min-w-0 truncate">{title}</h2>
